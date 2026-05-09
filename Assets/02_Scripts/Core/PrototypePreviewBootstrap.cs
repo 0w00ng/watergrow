@@ -16,11 +16,6 @@ namespace WaterGrow.Core
 
         private void Awake()
         {
-            if (FindObjectOfType<BoardManager>() != null && GameObject.Find("SkyWash") != null)
-            {
-                return;
-            }
-
             RebuildPreviewScene();
         }
 
@@ -125,6 +120,8 @@ namespace WaterGrow.Core
             {
                 existing.orthographic = true;
                 existing.orthographicSize = 5f;
+                existing.clearFlags = CameraClearFlags.SolidColor;
+                existing.backgroundColor = new Color(0.72f, 0.91f, 1f);
                 existing.transform.position = new Vector3(0f, 0f, -10f);
                 return existing;
             }
@@ -144,8 +141,7 @@ namespace WaterGrow.Core
         {
             GameObject canvasObject = new GameObject("PrototypePreviewCanvas");
             Canvas canvas = canvasObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = mainCamera;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasObject.AddComponent<GraphicRaycaster>();
 
             CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();

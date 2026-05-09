@@ -1,6 +1,6 @@
+using System.Collections;
 using WaterGrow.Board;
 using WaterGrow.Core;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +21,7 @@ namespace WaterGrow.UI
         [SerializeField] private Text baseHpText;
         [SerializeField] private Text representativeLevelText;
         [SerializeField] private RectTransform representativePreview;
+
         private bool boardEventsRegistered;
         private Coroutine attackPulseRoutine;
 
@@ -40,62 +41,13 @@ namespace WaterGrow.UI
         private void OnEnable()
         {
             RegisterBoardEvents();
-
-            if (summonButton != null)
-            {
-                summonButton.onClick.AddListener(HandleSummonClicked);
-            }
-
-            if (saveButton != null)
-            {
-                saveButton.onClick.AddListener(HandleSaveClicked);
-            }
-
-            if (restartButton != null)
-            {
-                restartButton.onClick.AddListener(HandleRestartClicked);
-            }
-
-            if (resetButton != null)
-            {
-                resetButton.onClick.AddListener(HandleResetClicked);
-            }
+            RegisterButtonEvents();
         }
 
         private void OnDisable()
         {
             UnregisterBoardEvents();
-
-            if (summonButton != null)
-            {
-                summonButton.onClick.RemoveListener(HandleSummonClicked);
-            }
-
-            if (saveButton != null)
-            {
-                saveButton.onClick.RemoveListener(HandleSaveClicked);
-            }
-
-            if (restartButton != null)
-            {
-                restartButton.onClick.RemoveListener(HandleRestartClicked);
-            }
-
-            if (resetButton != null)
-            {
-                resetButton.onClick.RemoveListener(HandleResetClicked);
-            }
-        }
-
-        public void RefreshAll()
-        {
-            if (boardManager == null)
-            {
-                return;
-            }
-
-            HandleGoldChanged(boardManager.Gold);
-            HandleSummonAvailabilityChanged(boardManager.CanSummon);
+            UnregisterButtonEvents();
         }
 
         public void Configure(
@@ -114,6 +66,8 @@ namespace WaterGrow.UI
             RectTransform representativePreviewTarget = null)
         {
             UnregisterBoardEvents();
+            UnregisterButtonEvents();
+
             boardManager = board;
             gameManager = game;
             summonButton = summon;
@@ -129,30 +83,18 @@ namespace WaterGrow.UI
             representativePreview = representativePreviewTarget;
 
             RegisterBoardEvents();
+            RegisterButtonEvents();
+        }
 
-            if (summonButton != null)
+        public void RefreshAll()
+        {
+            if (boardManager == null)
             {
-                summonButton.onClick.RemoveListener(HandleSummonClicked);
-                summonButton.onClick.AddListener(HandleSummonClicked);
+                return;
             }
 
-            if (saveButton != null)
-            {
-                saveButton.onClick.RemoveListener(HandleSaveClicked);
-                saveButton.onClick.AddListener(HandleSaveClicked);
-            }
-
-            if (restartButton != null)
-            {
-                restartButton.onClick.RemoveListener(HandleRestartClicked);
-                restartButton.onClick.AddListener(HandleRestartClicked);
-            }
-
-            if (resetButton != null)
-            {
-                resetButton.onClick.RemoveListener(HandleResetClicked);
-                resetButton.onClick.AddListener(HandleResetClicked);
-            }
+            HandleGoldChanged(boardManager.Gold);
+            HandleSummonAvailabilityChanged(boardManager.CanSummon);
         }
 
         public void UpdateStage(string stageId)
@@ -167,7 +109,7 @@ namespace WaterGrow.UI
         {
             if (remainingEnemiesText != null)
             {
-                remainingEnemiesText.text = $"남은 적 {remainingEnemies}";
+                remainingEnemiesText.text = $"Enemies {remainingEnemies}";
             }
         }
 
@@ -183,7 +125,7 @@ namespace WaterGrow.UI
         {
             if (representativeLevelText != null)
             {
-                representativeLevelText.text = level <= 0 ? "대표 없음" : $"대표 Lv.{level}";
+                representativeLevelText.text = level <= 0 ? "Representative: None" : $"Representative: Lv.{level}";
             }
 
             if (representativePreview == null)
@@ -198,13 +140,13 @@ namespace WaterGrow.UI
             }
 
             representativePreview.sizeDelta = level <= 0
-                ? new Vector2(96f, 96f)
-                : new Vector2(96f + level * 10f, 96f + level * 10f);
+                ? new Vector2(124f, 124f)
+                : new Vector2(124f + level * 8f, 124f + level * 8f);
 
             Text previewLabel = representativePreview.GetComponentInChildren<Text>();
             if (previewLabel != null)
             {
-                previewLabel.text = level <= 0 ? "대표\n없음" : $"Lv.{level}\n물정령";
+                previewLabel.text = level <= 0 ? "WATER" : $"Lv.{level}\nWATER";
             }
         }
 
@@ -244,17 +186,14 @@ namespace WaterGrow.UI
         private void HandleSaveClicked()
         {
             gameManager?.SaveGame();
-            if (guideText != null)
-            {
-                guideText.text = "저장 완료";
-            }
+            ShowGuideMessage("Saved.");
         }
 
         private void HandleRestartClicked()
         {
-            WaterGrow.Battle.BattleManager battleManager = FindObjectOfType<WaterGrow.Battle.BattleManager>();
+            Battle.BattleManager battleManager = FindObjectOfType<Battle.BattleManager>();
             battleManager?.StartTestStage();
-            ShowGuideMessage("테스트 스테이지 재시작");
+            ShowGuideMessage("Stage restarted.");
         }
 
         private void HandleResetClicked()
@@ -267,7 +206,7 @@ namespace WaterGrow.UI
                 boardManager.Initialize(saveManager.Current);
             }
 
-            ShowGuideMessage("저장 데이터 초기화");
+            ShowGuideMessage("Save data reset.");
         }
 
         private void HandleGoldChanged(int gold)
@@ -289,6 +228,12 @@ namespace WaterGrow.UI
         private void HandleBoardStateChanged()
         {
             UpdateBoardStateChanged();
+        }
+
+        private void HandleRepresentativeChanged(MergeUnit unit)
+        {
+            UpdateRepresentativeUnit(unit == null ? 0 : unit.Level);
+            ShowGuideMessage(unit == null ? "Tap SUMMON to create a Lv.1 water unit." : $"Lv.{unit.Level} water unit is now fighting.");
         }
 
         private void RegisterBoardEvents()
@@ -321,13 +266,53 @@ namespace WaterGrow.UI
             boardEventsRegistered = false;
         }
 
-        private void HandleRepresentativeChanged(MergeUnit unit)
+        private void RegisterButtonEvents()
         {
-            UpdateRepresentativeUnit(unit == null ? 0 : unit.Level);
-
-            if (guideText != null)
+            if (summonButton != null)
             {
-                guideText.text = unit == null ? "소환 버튼으로 Lv.1 물방울을 만드세요." : $"Lv.{unit.Level} 물정령이 대표로 출전합니다.";
+                summonButton.onClick.RemoveListener(HandleSummonClicked);
+                summonButton.onClick.AddListener(HandleSummonClicked);
+            }
+
+            if (saveButton != null)
+            {
+                saveButton.onClick.RemoveListener(HandleSaveClicked);
+                saveButton.onClick.AddListener(HandleSaveClicked);
+            }
+
+            if (restartButton != null)
+            {
+                restartButton.onClick.RemoveListener(HandleRestartClicked);
+                restartButton.onClick.AddListener(HandleRestartClicked);
+            }
+
+            if (resetButton != null)
+            {
+                resetButton.onClick.RemoveListener(HandleResetClicked);
+                resetButton.onClick.AddListener(HandleResetClicked);
+            }
+        }
+
+        private void UnregisterButtonEvents()
+        {
+            if (summonButton != null)
+            {
+                summonButton.onClick.RemoveListener(HandleSummonClicked);
+            }
+
+            if (saveButton != null)
+            {
+                saveButton.onClick.RemoveListener(HandleSaveClicked);
+            }
+
+            if (restartButton != null)
+            {
+                restartButton.onClick.RemoveListener(HandleRestartClicked);
+            }
+
+            if (resetButton != null)
+            {
+                resetButton.onClick.RemoveListener(HandleResetClicked);
             }
         }
 
@@ -348,7 +333,7 @@ namespace WaterGrow.UI
                 3 => new Color(0.14f, 0.88f, 0.72f),
                 4 => new Color(0.38f, 0.72f, 1f),
                 5 => new Color(0.72f, 0.88f, 1f),
-                _ => new Color(0.16f, 0.25f, 0.34f)
+                _ => new Color(0.10f, 0.62f, 1f)
             };
         }
     }
