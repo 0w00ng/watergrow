@@ -52,7 +52,10 @@ namespace WaterGrow.Core
 
             if (enemiesById.Count == 0)
             {
-                AddEnemy(new EnemyData("ENEMY_001", "불꽃 병사", 30, 1.0f, 5, 1));
+                AddEnemy(new EnemyData("ENEMY_001", "불꽃 병사", "Basic", 35, 1.0f, 1, 5, 0, false));
+                AddEnemy(new EnemyData("ENEMY_002", "불꽃 방패병", "Tank", 95, 0.72f, 1, 9, 0, false));
+                AddEnemy(new EnemyData("ENEMY_003", "불꽃 기병", "Fast", 58, 1.45f, 1, 8, 0, false));
+                AddEnemy(new EnemyData("BOSS_001", "불꽃 대장", "Boss", 850, 0.55f, 2, 100, 5, true));
             }
         }
 
@@ -110,7 +113,7 @@ namespace WaterGrow.Core
 
             foreach (EnemyRow row in table.enemies)
             {
-                AddEnemy(new EnemyData(row.enemyId, row.enemyNameKo, row.hp, row.moveSpeed, row.rewardGold, row.attackPower));
+                AddEnemy(new EnemyData(row.enemyId, row.enemyNameKo, row.enemyType, row.hp, row.moveSpeed, row.attackPower, row.rewardGold, row.rewardCrystal, row.isBoss));
             }
         }
 
@@ -140,10 +143,13 @@ namespace WaterGrow.Core
         {
             public string enemyId;
             public string enemyNameKo;
+            public string enemyType;
             public int hp;
             public float moveSpeed;
             public int attackPower;
             public int rewardGold;
+            public int rewardCrystal;
+            public bool isBoss;
         }
     }
 }

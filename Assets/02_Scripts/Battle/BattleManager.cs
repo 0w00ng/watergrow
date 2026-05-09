@@ -14,19 +14,6 @@ namespace WaterGrow.Battle
 {
     public class BattleManager : MonoBehaviour
     {
-        [Serializable]
-        private class StageConfig
-        {
-            public string stageId = "STAGE_1_01";
-            public int enemyCount = 10;
-            public float spawnInterval = 1.5f;
-            public int baseHp = 5;
-            public string enemyId = "ENEMY_001";
-            public string waveGroupId = "WAVE_1_01";
-            public int clearRewardGold = 30;
-            public int clearRewardCrystal;
-        }
-
         [SerializeField] private BoardManager boardManager;
         [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private StageManager stageManager;
@@ -42,13 +29,8 @@ namespace WaterGrow.Battle
 
         [Header("Prototype Stages")]
         [SerializeField] private bool autoStartTestStage = true;
-        [SerializeField]
-        private List<StageConfig> stageConfigs = new List<StageConfig>
-        {
-            new StageConfig { stageId = "STAGE_1_01", enemyCount = 10, spawnInterval = 1.5f, baseHp = 5, enemyId = "ENEMY_001", waveGroupId = "WAVE_1_01", clearRewardGold = 50, clearRewardCrystal = 0 },
-            new StageConfig { stageId = "STAGE_1_02", enemyCount = 14, spawnInterval = 1.35f, baseHp = 5, enemyId = "ENEMY_001", waveGroupId = "WAVE_1_02", clearRewardGold = 80, clearRewardCrystal = 1 },
-            new StageConfig { stageId = "STAGE_1_03", enemyCount = 18, spawnInterval = 1.2f, baseHp = 5, enemyId = "ENEMY_001", waveGroupId = "WAVE_1_03", clearRewardGold = 120, clearRewardCrystal = 2 }
-        };
+        [SerializeField] private int baseHpPerStage = 5;
+        [SerializeField] private List<StageData> stageConfigs = new List<StageData>();
 
         private MergeUnit representative;
         private WaterUnitData representativeData;
@@ -59,7 +41,7 @@ namespace WaterGrow.Battle
         private bool isSubscribed;
         private int currentStageIndex;
 
-        private StageConfig CurrentStage => stageConfigs[Mathf.Clamp(currentStageIndex, 0, stageConfigs.Count - 1)];
+        private StageData CurrentStage => stageConfigs[Mathf.Clamp(currentStageIndex, 0, stageConfigs.Count - 1)];
 
         private void Awake()
         {
@@ -73,13 +55,7 @@ namespace WaterGrow.Battle
             rewardManager ??= FindObjectOfType<RewardManager>();
             upgradeManager ??= FindObjectOfType<UpgradeManager>();
 
-            if (stageConfigs == null || stageConfigs.Count == 0)
-            {
-                stageConfigs = new List<StageConfig>
-                {
-                    new StageConfig()
-                };
-            }
+            EnsureFallbackStages();
         }
 
         private void OnEnable()
@@ -96,6 +72,7 @@ namespace WaterGrow.Battle
         {
             if (autoStartTestStage)
             {
+                SelectSavedStage();
                 StartCurrentStage();
             }
         }
@@ -169,21 +146,22 @@ namespace WaterGrow.Battle
                 return;
             }
 
-            StageConfig config = CurrentStage;
+            StageData config = CurrentStage;
             StopCurrentSpawnRoutine();
             StopAutoAdvanceRoutine();
             ClearActiveEnemies();
             attackTimer = 0f;
 
-            int totalEnemyCount = waveManager == null ? config.enemyCount : waveManager.GetTotalEnemyCount(config.waveGroupId);
+            int totalEnemyCount = Mathf.Max(1, waveManager == null ? 10 : waveManager.GetTotalEnemyCount(config.waveGroupId));
             stageManager.MoveToStage(config.stageId);
-            stageManager.StartStage(config.stageId, totalEnemyCount, config.baseHp);
+            stageManager.StartStage(config.stageId, totalEnemyCount, baseHpPerStage);
             SaveCurrentStage(config.stageId);
-            uiManager?.UpdateStage(stageManager.CurrentStageId);
+            uiManager?.UpdateStage($"{config.stageNumber}. {config.stageNameKo}");
+            uiManager?.UpdateWaveProgress(1, waveManager == null ? 1 : waveManager.GetWaveCount(config.waveGroupId));
             uiManager?.UpdateRemainingEnemies(stageManager.RemainingEnemies);
             uiManager?.UpdateBaseHp(stageManager.BaseHp, stageManager.MaxBaseHp);
             uiManager?.SetRestartButtonLabel("RETRY");
-            uiManager?.ShowGuideMessage($"{config.stageId} started. Build water units and defend the base.");
+            uiManager?.ShowGuideMessage($"{config.stageNameKo} 시작. 물정령을 키워 불꽃 적을 막으세요.");
 
             if (waveManager != null)
             {
@@ -195,17 +173,18 @@ namespace WaterGrow.Battle
             }
         }
 
-        private IEnumerator SpawnStageEnemies(StageConfig config)
+        private IEnumerator SpawnStageEnemies(StageData config)
         {
-            for (int i = 0; i < config.enemyCount; i++)
+            int enemyCount = 10;
+            for (int i = 0; i < enemyCount; i++)
             {
                 if (stageManager == null || !stageManager.IsStageRunning)
                 {
                     yield break;
                 }
 
-                SpawnEnemy(dataManager == null ? null : dataManager.GetEnemyData(config.enemyId));
-                yield return new WaitForSeconds(Mathf.Max(0.1f, config.spawnInterval));
+                SpawnEnemy(dataManager == null ? null : dataManager.GetEnemyData("ENEMY_001"));
+                yield return new WaitForSeconds(1.5f);
             }
 
             spawnRoutine = null;
@@ -245,7 +224,7 @@ namespace WaterGrow.Battle
         private void HandleEnemyKilled(EnemyController enemy)
         {
             activeEnemies.Remove(enemy);
-            boardManager?.AddGold(enemy == null ? 0 : enemy.RewardGold);
+            rewardManager?.GrantEnemyReward(enemy == null ? 0 : enemy.RewardGold, enemy == null ? 0 : enemy.RewardCrystal);
             stageManager?.NotifyEnemyKilled();
 
             if (stageManager != null)
@@ -269,19 +248,19 @@ namespace WaterGrow.Battle
         private void HandleStageCleared()
         {
             StopCurrentSpawnRoutine();
-            StageConfig config = CurrentStage;
+            StageData config = CurrentStage;
             rewardManager?.GrantStageClearReward(config.stageId, config.clearRewardGold, config.clearRewardCrystal);
 
             if (currentStageIndex < stageConfigs.Count - 1)
             {
                 uiManager?.SetRestartButtonLabel("AUTO");
-                uiManager?.ShowGuideMessage($"Stage cleared. Reward +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal. Next stage soon.");
+                uiManager?.ShowGuideMessage($"{config.stageNameKo} 클리어. 보상 +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal.");
                 autoAdvanceRoutine = StartCoroutine(AutoAdvanceToNextStage());
             }
             else
             {
                 uiManager?.SetRestartButtonLabel("RETRY");
-                uiManager?.ShowGuideMessage($"Prototype stages cleared. Reward +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal.");
+                uiManager?.ShowGuideMessage($"챕터 1 클리어. 보상 +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal.");
             }
         }
 
@@ -490,6 +469,42 @@ namespace WaterGrow.Battle
             saveManager.Save();
         }
 
+        private void SelectSavedStage()
+        {
+            if (saveManager?.Current == null || string.IsNullOrEmpty(saveManager.Current.currentStageId))
+            {
+                return;
+            }
+
+            int savedIndex = stageConfigs.FindIndex(stage => stage.stageId == saveManager.Current.currentStageId);
+            if (savedIndex >= 0)
+            {
+                currentStageIndex = savedIndex;
+            }
+        }
+
+        private void EnsureFallbackStages()
+        {
+            if (stageConfigs != null && stageConfigs.Count > 0)
+            {
+                return;
+            }
+
+            stageConfigs = new List<StageData>
+            {
+                new StageData("STAGE_1_01", "CHAPTER_1", 1, "물의 숲 입구", "WAVE_1_01", 50, 0, false),
+                new StageData("STAGE_1_02", "CHAPTER_1", 2, "작은 불씨 길", "WAVE_1_02", 70, 0, false),
+                new StageData("STAGE_1_03", "CHAPTER_1", 3, "불꽃 병사 무리", "WAVE_1_03", 90, 1, false),
+                new StageData("STAGE_1_04", "CHAPTER_1", 4, "방패 든 불꽃", "WAVE_1_04", 110, 1, false),
+                new StageData("STAGE_1_05", "CHAPTER_1", 5, "병사와 방패병", "WAVE_1_05", 135, 2, false),
+                new StageData("STAGE_1_06", "CHAPTER_1", 6, "빠른 불꽃 기병", "WAVE_1_06", 160, 2, false),
+                new StageData("STAGE_1_07", "CHAPTER_1", 7, "기병 돌파", "WAVE_1_07", 190, 3, false),
+                new StageData("STAGE_1_08", "CHAPTER_1", 8, "방패와 기병", "WAVE_1_08", 220, 3, false),
+                new StageData("STAGE_1_09", "CHAPTER_1", 9, "불꽃 혼합 부대", "WAVE_1_09", 260, 4, false),
+                new StageData("STAGE_1_10", "CHAPTER_1", 10, "물의 숲 수호전", "WAVE_1_10", 320, 8, true)
+            };
+        }
+
         private void SubscribeEvents()
         {
             if (isSubscribed)
@@ -511,6 +526,7 @@ namespace WaterGrow.Battle
             if (waveManager != null)
             {
                 waveManager.EnemySpawned += HandleEnemySpawned;
+                waveManager.WaveProgressChanged += HandleWaveProgressChanged;
             }
 
             isSubscribed = true;
@@ -537,6 +553,7 @@ namespace WaterGrow.Battle
             if (waveManager != null)
             {
                 waveManager.EnemySpawned -= HandleEnemySpawned;
+                waveManager.WaveProgressChanged -= HandleWaveProgressChanged;
             }
 
             isSubscribed = false;
@@ -548,6 +565,11 @@ namespace WaterGrow.Battle
             {
                 activeEnemies.Add(enemy);
             }
+        }
+
+        private void HandleWaveProgressChanged(int currentWave, int totalWaves)
+        {
+            uiManager?.UpdateWaveProgress(currentWave, totalWaves);
         }
     }
 }

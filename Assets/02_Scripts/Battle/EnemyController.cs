@@ -7,6 +7,9 @@ namespace WaterGrow.Battle
 {
     public class EnemyController : MonoBehaviour
     {
+        public event Action<EnemyController> Killed;
+        public event Action<EnemyController> ReachedBase;
+
         [SerializeField] private Slider hpBar;
         [SerializeField] private Image bodyImage;
         [SerializeField] private Text nameText;
@@ -32,6 +35,7 @@ namespace WaterGrow.Battle
         public bool IsDead => currentHp <= 0;
         public string EnemyId => data == null ? string.Empty : data.enemyId;
         public int RewardGold => data == null ? 0 : data.rewardGold;
+        public int RewardCrystal => data == null ? 0 : data.rewardCrystal;
         public int DamageToBase => data == null ? 0 : data.damageToBase;
         public float DistanceToTarget => targetPoint == null ? float.MaxValue : Vector3.Distance(transform.position, targetPoint.position);
 
@@ -87,6 +91,7 @@ namespace WaterGrow.Battle
             if (DistanceToTarget <= reachDistance)
             {
                 isResolved = true;
+                ReachedBase?.Invoke(this);
                 reachedBaseCallback?.Invoke(this);
                 StartCoroutine(ResolveAndDestroy(false));
             }
@@ -107,6 +112,7 @@ namespace WaterGrow.Battle
             if (IsDead)
             {
                 isResolved = true;
+                Killed?.Invoke(this);
                 killedCallback?.Invoke(this);
                 StartCoroutine(ResolveAndDestroy(true));
             }

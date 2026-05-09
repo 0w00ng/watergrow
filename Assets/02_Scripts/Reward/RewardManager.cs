@@ -26,6 +26,18 @@ namespace WaterGrow.Reward
             boardManager?.AddGold(amount);
         }
 
+        public void GrantEnemyReward(int gold, int waterCrystal)
+        {
+            GrantGold(gold);
+
+            if (saveManager?.Current != null)
+            {
+                boardManager?.WriteBoardState(saveManager.Current);
+                saveManager.Current.waterCrystal += Mathf.Max(0, waterCrystal);
+                saveManager.Save();
+            }
+        }
+
         public void GrantStageClearReward(string stageId, int gold, int waterCrystal)
         {
             GrantGold(gold);

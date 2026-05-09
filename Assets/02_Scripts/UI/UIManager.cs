@@ -31,6 +31,9 @@ namespace WaterGrow.UI
         private bool boardEventsRegistered;
         private Coroutine attackPulseRoutine;
         private float currentBaseHpScale = 1f;
+        private int currentWaveIndex = 1;
+        private int totalWaveCount = 1;
+        private int currentRemainingEnemies;
 
         private void Awake()
         {
@@ -130,9 +133,22 @@ namespace WaterGrow.UI
 
         public void UpdateRemainingEnemies(int remainingEnemies)
         {
+            currentRemainingEnemies = Mathf.Max(0, remainingEnemies);
+            RefreshWaveEnemyText();
+        }
+
+        public void UpdateWaveProgress(int currentWave, int totalWaves)
+        {
+            currentWaveIndex = Mathf.Max(1, currentWave);
+            totalWaveCount = Mathf.Max(1, totalWaves);
+            RefreshWaveEnemyText();
+        }
+
+        private void RefreshWaveEnemyText()
+        {
             if (remainingEnemiesText != null)
             {
-                remainingEnemiesText.text = $"~  Enemies {remainingEnemies}";
+                remainingEnemiesText.text = $"Wave {currentWaveIndex}/{totalWaveCount} | Enemies {currentRemainingEnemies}";
             }
         }
 
