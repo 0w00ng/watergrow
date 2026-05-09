@@ -67,8 +67,8 @@ namespace WaterGrow.Core
             Text representativeText = CreateText("RepresentativeText", battleField, "대표 출전: 없음", new Vector2(0.08f, 0.80f), new Vector2(0.92f, 0.94f), TextAnchor.MiddleCenter, 28, new Color(0.08f, 0.30f, 0.26f));
             representativeText.fontStyle = FontStyle.Bold;
 
-            Transform targetPoint = CreateMarker("BasePoint", battleField, new Vector2(0.91f, 0.34f), new Color(0.78f, 0.69f, 0.52f), new Vector2(76f, 116f), "BASE");
-            Transform spawnPoint = CreateMarker("SpawnPoint", battleField, new Vector2(0.56f, 0.34f), new Color(1f, 0.35f, 0.10f), new Vector2(70f, 90f), "FIRE");
+            Transform targetPoint = CreateMarker("BasePoint", battleField, new Vector2(0.24f, 0.34f), new Color(0.10f, 0.46f, 0.92f), new Vector2(76f, 96f), "WATER");
+            Transform spawnPoint = CreateMarker("SpawnPoint", battleField, new Vector2(0.92f, 0.34f), new Color(0.78f, 0.69f, 0.52f), new Vector2(76f, 116f), "BASE");
             RectTransform waterUnitPreview = (RectTransform)CreateMarker("WaterUnitPreview", battleField, new Vector2(0.22f, 0.36f), new Color(0.72f, 0.94f, 1f), new Vector2(150f, 150f), "WATER");
 
             RectTransform enemyRoot = new GameObject("EnemyRoot", typeof(RectTransform)).GetComponent<RectTransform>();

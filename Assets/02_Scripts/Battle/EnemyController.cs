@@ -11,6 +11,7 @@ namespace WaterGrow.Battle
         [SerializeField] private Image bodyImage;
         [SerializeField] private Text nameText;
         [SerializeField] private float reachDistance = 0.05f;
+        [SerializeField] private float uiMoveSpeedMultiplier = 95f;
         [SerializeField] private Color normalColor = new Color(1f, 0.35f, 0.08f);
         [SerializeField] private Color hitColor = new Color(1f, 0.92f, 0.25f);
 
@@ -22,6 +23,8 @@ namespace WaterGrow.Battle
         private Action<EnemyController> killedCallback;
         private Action<EnemyController> reachedBaseCallback;
         private Coroutine hitFlashRoutine;
+        private CanvasGroup canvasGroup;
+        private bool usesRectTransform;
 
         public bool IsDead => currentHp <= 0;
         public string EnemyId => data == null ? string.Empty : data.enemyId;
@@ -39,6 +42,12 @@ namespace WaterGrow.Battle
             maxHp = Mathf.Max(1, data == null ? 1 : data.hp);
             currentHp = maxHp;
             isResolved = false;
+            usesRectTransform = transform is RectTransform;
+            canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null && usesRectTransform)
+            {
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
 
             if (nameText != null)
             {
@@ -67,13 +76,14 @@ namespace WaterGrow.Battle
                 return;
             }
 
-            transform.position = Vector3.MoveTowards(transform.position, targetPoint.position, data.moveSpeed * Time.deltaTime);
+            float speed = data.moveSpeed * (usesRectTransform ? uiMoveSpeedMultiplier : 1f);
+            transform.position = Vector3.MoveTowards(transform.position, targetPoint.position, speed * Time.deltaTime);
 
             if (DistanceToTarget <= reachDistance)
             {
                 isResolved = true;
                 reachedBaseCallback?.Invoke(this);
-                Destroy(gameObject);
+                StartCoroutine(ResolveAndDestroy(false));
             }
         }
 
@@ -92,7 +102,7 @@ namespace WaterGrow.Battle
             {
                 isResolved = true;
                 killedCallback?.Invoke(this);
-                Destroy(gameObject);
+                StartCoroutine(ResolveAndDestroy(true));
             }
         }
 
@@ -127,6 +137,30 @@ namespace WaterGrow.Battle
             bodyImage.color = normalColor;
             transform.localScale = Vector3.one;
             hitFlashRoutine = null;
+        }
+
+        private IEnumerator ResolveAndDestroy(bool killed)
+        {
+            float elapsed = 0f;
+            const float duration = 0.22f;
+            Vector3 startScale = transform.localScale;
+            Vector3 endScale = killed ? Vector3.one * 0.82f : Vector3.one * 0.92f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                transform.localScale = Vector3.Lerp(startScale, endScale, t);
+
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = Mathf.Lerp(1f, 0f, t);
+                }
+
+                yield return null;
+            }
+
+            Destroy(gameObject);
         }
     }
 }
