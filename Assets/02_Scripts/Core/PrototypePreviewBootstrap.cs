@@ -16,8 +16,7 @@ namespace WaterGrow.Core
 
         private void Awake()
         {
-            ClearGeneratedPreviewObjects();
-            BuildPreviewScene();
+            RebuildPreviewScene();
         }
 
         public void RebuildPreviewScene()
@@ -320,14 +319,7 @@ namespace WaterGrow.Core
                     continue;
                 }
 
-                if (Application.isPlaying)
-                {
-                    Destroy(target);
-                }
-                else
-                {
-                    DestroyImmediate(target);
-                }
+                DestroyImmediate(target);
             }
         }
 

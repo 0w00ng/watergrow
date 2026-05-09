@@ -172,7 +172,14 @@ namespace WaterGrow.Board
 
             foreach (Transform child in gridRoot)
             {
-                Destroy(child.gameObject);
+                if (Application.isPlaying)
+                {
+                    Destroy(child.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(child.gameObject);
+                }
             }
 
             cells.Clear();
