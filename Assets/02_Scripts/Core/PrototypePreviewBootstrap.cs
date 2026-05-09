@@ -23,7 +23,11 @@ namespace WaterGrow.Core
         public void RebuildPreviewScene()
         {
             ClearGeneratedPreviewObjects();
-            defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            defaultFont = Font.CreateDynamicFontFromOSFont(new[] { "Malgun Gothic", "Arial" }, 24);
+            if (defaultFont == null)
+            {
+                defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            }
 
             Camera mainCamera = CreateMainCamera();
             EnsureEventSystem();
@@ -46,61 +50,68 @@ namespace WaterGrow.Core
             Stretch(safeArea);
             BuildBackground(safeArea);
 
-            Text titleText = CreateText("TitleText", safeArea, "WATER GROW", new Vector2(0.06f, 0.945f), new Vector2(0.94f, 0.99f), TextAnchor.MiddleCenter, 48, new Color(0.05f, 0.28f, 0.48f));
-            titleText.fontStyle = FontStyle.Bold;
+            RectTransform hudPanel = CreatePanel("HudPanel", safeArea, new Color(1f, 1f, 1f, 0f));
+            SetAnchors(hudPanel, new Vector2(0.03f, 0.945f), new Vector2(0.97f, 0.99f));
 
-            RectTransform hudPanel = CreatePanel("HudPanel", safeArea, new Color(1f, 1f, 1f, 0.72f));
-            SetAnchors(hudPanel, new Vector2(0.04f, 0.895f), new Vector2(0.96f, 0.94f));
-            AddShadow(hudPanel.gameObject, new Vector2(0f, -4f), new Color(0.06f, 0.23f, 0.36f, 0.22f));
+            Text stageText = CreateHudCard(hudPanel, "StageCard", ">  Stage 1-1", new Vector2(0.00f, 0f), new Vector2(0.24f, 1f), new Color(0.06f, 0.26f, 0.42f));
+            Text remainingText = CreateHudCard(hudPanel, "WaveCard", "~  Enemies 10", new Vector2(0.255f, 0f), new Vector2(0.47f, 1f), new Color(0.10f, 0.45f, 0.40f));
+            Text goldText = CreateHudCard(hudPanel, "GoldCard", "Gold 100", new Vector2(0.485f, 0f), new Vector2(0.70f, 1f), new Color(0.78f, 0.48f, 0.05f));
+            Text baseHpText = CreateHudCard(hudPanel, "BaseHpCard", "Base HP 5", new Vector2(0.715f, 0f), new Vector2(0.92f, 1f), new Color(0.05f, 0.36f, 0.72f));
+            CreateHudCard(hudPanel, "PauseCard", "II", new Vector2(0.935f, 0f), new Vector2(1f, 1f), new Color(0.08f, 0.35f, 0.25f));
 
-            Text stageText = CreateText("StageText", hudPanel, "Stage 1-1", new Vector2(0.03f, 0.08f), new Vector2(0.27f, 0.92f), TextAnchor.MiddleCenter, 25, new Color(0.06f, 0.26f, 0.42f));
-            Text remainingText = CreateText("RemainingText", hudPanel, "Enemies 10", new Vector2(0.28f, 0.08f), new Vector2(0.53f, 0.92f), TextAnchor.MiddleCenter, 25, new Color(0.72f, 0.20f, 0.08f));
-            Text baseHpText = CreateText("BaseHpText", hudPanel, "Base HP 5", new Vector2(0.54f, 0.08f), new Vector2(0.76f, 0.92f), TextAnchor.MiddleCenter, 25, new Color(0.05f, 0.36f, 0.72f));
-            Text goldText = CreateText("GoldText", hudPanel, "Gold 100", new Vector2(0.77f, 0.08f), new Vector2(0.97f, 0.92f), TextAnchor.MiddleCenter, 25, new Color(0.78f, 0.48f, 0.05f));
-
-            RectTransform battleField = CreatePanel("BattleField", safeArea, new Color(0.86f, 0.96f, 1f, 1f));
-            SetAnchors(battleField, new Vector2(0.04f, 0.47f), new Vector2(0.96f, 0.875f));
-            AddShadow(battleField.gameObject, new Vector2(0f, -8f), new Color(0.04f, 0.20f, 0.32f, 0.20f));
+            RectTransform battleField = CreatePanel("BattleField", safeArea, new Color(0.86f, 0.97f, 1f, 0.86f));
+            SetAnchors(battleField, new Vector2(0.035f, 0.66f), new Vector2(0.965f, 0.935f));
+            AddShadow(battleField.gameObject, new Vector2(0f, -6f), new Color(0.04f, 0.20f, 0.32f, 0.18f));
             BuildBattleField(battleField);
 
-            Text representativeText = CreateText("RepresentativeText", battleField, "Representative: None", new Vector2(0.06f, 0.82f), new Vector2(0.94f, 0.96f), TextAnchor.MiddleCenter, 32, new Color(0.05f, 0.30f, 0.52f));
+            Text representativeText = CreateText("RepresentativeText", battleField, "대표 출전: 없음", new Vector2(0.08f, 0.80f), new Vector2(0.92f, 0.94f), TextAnchor.MiddleCenter, 28, new Color(0.08f, 0.30f, 0.26f));
             representativeText.fontStyle = FontStyle.Bold;
-            Text guideText = CreateText("GuideText", battleField, "Summon water drops, then drag one unit onto the same level to merge.", new Vector2(0.06f, 0.04f), new Vector2(0.94f, 0.13f), TextAnchor.MiddleCenter, 22, new Color(0.18f, 0.34f, 0.42f));
 
-            Transform targetPoint = CreateMarker("BasePoint", battleField, new Vector2(0.12f, 0.46f), new Color(0.10f, 0.46f, 0.92f), new Vector2(88f, 88f), "BASE");
-            Transform spawnPoint = CreateMarker("SpawnPoint", battleField, new Vector2(0.88f, 0.46f), new Color(1f, 0.35f, 0.10f), new Vector2(88f, 88f), "FIRE");
-            RectTransform waterUnitPreview = (RectTransform)CreateMarker("WaterUnitPreview", battleField, new Vector2(0.25f, 0.46f), new Color(0.10f, 0.62f, 1f), new Vector2(124f, 124f), "WATER");
+            Transform targetPoint = CreateMarker("BasePoint", battleField, new Vector2(0.91f, 0.34f), new Color(0.78f, 0.69f, 0.52f), new Vector2(76f, 116f), "BASE");
+            Transform spawnPoint = CreateMarker("SpawnPoint", battleField, new Vector2(0.56f, 0.34f), new Color(1f, 0.35f, 0.10f), new Vector2(70f, 90f), "FIRE");
+            RectTransform waterUnitPreview = (RectTransform)CreateMarker("WaterUnitPreview", battleField, new Vector2(0.22f, 0.36f), new Color(0.72f, 0.94f, 1f), new Vector2(150f, 150f), "WATER");
 
             RectTransform enemyRoot = new GameObject("EnemyRoot", typeof(RectTransform)).GetComponent<RectTransform>();
             enemyRoot.SetParent(battleField, false);
             Stretch(enemyRoot);
             enemySpawner.Configure(spawnPoint, targetPoint, enemyRoot);
 
-            RectTransform boardPanel = CreatePanel("MergeBoardPanel", safeArea, new Color(0.05f, 0.25f, 0.37f, 0.92f));
-            SetAnchors(boardPanel, new Vector2(0.04f, 0.145f), new Vector2(0.96f, 0.435f));
-            AddShadow(boardPanel.gameObject, new Vector2(0f, -8f), new Color(0.02f, 0.11f, 0.17f, 0.35f));
-            CreateText("BoardTitle", boardPanel, "MERGE BOARD", new Vector2(0.04f, 0.88f), new Vector2(0.96f, 0.99f), TextAnchor.MiddleCenter, 24, new Color(0.75f, 0.95f, 1f));
+            RectTransform wavePanel = CreatePanel("WaveStatusPanel", safeArea, new Color(1f, 1f, 1f, 0.82f));
+            SetAnchors(wavePanel, new Vector2(0.035f, 0.605f), new Vector2(0.965f, 0.65f));
+            AddShadow(wavePanel.gameObject, new Vector2(0f, -4f), new Color(0.10f, 0.24f, 0.18f, 0.18f));
+            CreateText("WaveTimerText", wavePanel, "다음 웨이브  00:05        ----", new Vector2(0.06f, 0f), new Vector2(0.94f, 1f), TextAnchor.MiddleCenter, 30, new Color(0.12f, 0.22f, 0.20f));
+
+            RectTransform boardPanel = CreatePanel("MergeBoardPanel", safeArea, new Color(0.94f, 1f, 0.97f, 0.90f));
+            SetAnchors(boardPanel, new Vector2(0.035f, 0.15f), new Vector2(0.965f, 0.595f));
+            AddShadow(boardPanel.gameObject, new Vector2(0f, -7f), new Color(0.10f, 0.24f, 0.18f, 0.22f));
 
             GridLayoutGroup grid = boardPanel.gameObject.AddComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 6;
-            grid.spacing = new Vector2(10f, 10f);
-            grid.padding = new RectOffset(14, 14, 42, 14);
-            grid.cellSize = new Vector2(144f, 104f);
+            grid.spacing = new Vector2(12f, 12f);
+            grid.padding = new RectOffset(14, 14, 18, 18);
+            grid.cellSize = new Vector2(150f, 188f);
 
             BoardCell cellPrefab = CreateBoardCellPrefab(canvas.transform);
             boardManager.ConfigureBoard(boardPanel, cellPrefab);
 
-            Button summonButton = CreateButton("SummonButton", safeArea, "SUMMON", new Vector2(0.04f, 0.04f), new Vector2(0.36f, 0.115f), new Color(0.05f, 0.50f, 0.92f), 34);
-            Button upgradeButton = CreateButton("UpgradeButton", safeArea, "UPGRADE", new Vector2(0.39f, 0.04f), new Vector2(0.61f, 0.115f), new Color(0.78f, 0.48f, 0.08f), 25);
+            Text guideText = CreateText("GuideText", safeArea, "같은 등급을 합치면 더 높은 등급의 물정령이 됩니다.", new Vector2(0.11f, 0.125f), new Vector2(0.89f, 0.145f), TextAnchor.MiddleCenter, 24, new Color(0.12f, 0.42f, 0.29f));
+
+            RectTransform actionDock = CreatePanel("ActionDock", safeArea, new Color(1f, 1f, 1f, 0.86f));
+            SetAnchors(actionDock, new Vector2(0.035f, 0.02f), new Vector2(0.965f, 0.118f));
+            AddShadow(actionDock.gameObject, new Vector2(0f, -6f), new Color(0.08f, 0.22f, 0.16f, 0.28f));
+
+            Button upgradeButton = CreateButton("UpgradeButton", actionDock, "강화", new Vector2(0.04f, 0.15f), new Vector2(0.22f, 0.85f), new Color(0.94f, 1f, 0.95f), 27);
             Text upgradeLabel = upgradeButton.GetComponentInChildren<Text>();
             if (upgradeLabel != null)
             {
                 SetAnchors(upgradeLabel.GetComponent<RectTransform>(), new Vector2(0f, 0.40f), Vector2.one);
+                upgradeLabel.color = new Color(0.10f, 0.43f, 0.25f);
             }
-            Text upgradeText = CreateText("UpgradeText", upgradeButton.GetComponent<RectTransform>(), "ATK Lv.0  Cost 50", new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.42f), TextAnchor.MiddleCenter, 15, new Color(1f, 0.95f, 0.75f));
-            Button restartButton = CreateButton("RestartButton", safeArea, "RETRY", new Vector2(0.64f, 0.04f), new Vector2(0.79f, 0.115f), new Color(0.16f, 0.62f, 0.48f), 24);
-            Button resetButton = CreateButton("ResetButton", safeArea, "RESET", new Vector2(0.82f, 0.04f), new Vector2(0.96f, 0.115f), new Color(0.74f, 0.24f, 0.28f), 23);
+            Text upgradeText = CreateText("UpgradeText", upgradeButton.GetComponent<RectTransform>(), "ATK Lv.0", new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.42f), TextAnchor.MiddleCenter, 15, new Color(0.10f, 0.43f, 0.25f));
+            Button summonButton = CreateButton("SummonButton", actionDock, "물방울 소환 100", new Vector2(0.27f, 0.10f), new Vector2(0.73f, 0.90f), new Color(0.18f, 0.76f, 0.74f), 38);
+            Button restartButton = CreateButton("RestartButton", actionDock, "재도전", new Vector2(0.78f, 0.15f), new Vector2(0.89f, 0.85f), new Color(0.94f, 1f, 0.95f), 20);
+            Button resetButton = CreateButton("ResetButton", actionDock, "초기화", new Vector2(0.90f, 0.15f), new Vector2(0.98f, 0.85f), new Color(0.96f, 0.93f, 0.90f), 18);
             Button saveButton = null;
 
             dataManager.Load();
@@ -194,16 +205,22 @@ namespace WaterGrow.Core
 
         private void BuildBackground(RectTransform parent)
         {
-            RectTransform topSky = CreatePanel("SkyWash", parent, new Color(0.80f, 0.95f, 1f, 1f));
-            SetAnchors(topSky, new Vector2(0f, 0.48f), Vector2.one);
+            RectTransform topSky = CreatePanel("SkyWash", parent, new Color(0.82f, 0.96f, 1f, 1f));
+            SetAnchors(topSky, new Vector2(0f, 0.56f), Vector2.one);
 
-            RectTransform lowerSea = CreatePanel("SeaWash", parent, new Color(0.22f, 0.67f, 0.86f, 1f));
-            SetAnchors(lowerSea, Vector2.zero, new Vector2(1f, 0.50f));
+            RectTransform lowerGarden = CreatePanel("GardenWash", parent, new Color(0.91f, 0.98f, 0.82f, 1f));
+            SetAnchors(lowerGarden, Vector2.zero, new Vector2(1f, 0.63f));
+
+            RectTransform border = CreatePanel("SoftGreenBorder", parent, new Color(0.47f, 0.70f, 0.28f, 0.22f));
+            SetAnchors(border, new Vector2(0.006f, 0.006f), new Vector2(0.994f, 0.994f));
+            Outline borderOutline = border.gameObject.AddComponent<Outline>();
+            borderOutline.effectColor = new Color(0.35f, 0.55f, 0.20f, 0.45f);
+            borderOutline.effectDistance = new Vector2(4f, 4f);
 
             for (int i = 0; i < 5; i++)
             {
                 RectTransform bubble = CreatePanel($"Bubble_{i + 1}", parent, new Color(1f, 1f, 1f, 0.18f));
-                bubble.anchorMin = new Vector2(0.08f + i * 0.18f, 0.78f - (i % 2) * 0.08f);
+                bubble.anchorMin = new Vector2(0.10f + i * 0.17f, 0.80f - (i % 2) * 0.06f);
                 bubble.anchorMax = bubble.anchorMin;
                 bubble.pivot = new Vector2(0.5f, 0.5f);
                 bubble.sizeDelta = new Vector2(42f + i * 10f, 42f + i * 10f);
@@ -212,20 +229,27 @@ namespace WaterGrow.Core
 
         private void BuildBattleField(RectTransform battleField)
         {
-            RectTransform waterZone = CreatePanel("WaterZone", battleField, new Color(0.55f, 0.86f, 1f, 0.45f));
-            SetAnchors(waterZone, new Vector2(0.02f, 0.18f), new Vector2(0.45f, 0.78f));
+            RectTransform sky = CreatePanel("BattleSky", battleField, new Color(0.77f, 0.94f, 1f, 0.75f));
+            SetAnchors(sky, new Vector2(0f, 0.46f), Vector2.one);
+
+            RectTransform grass = CreatePanel("BattleGrass", battleField, new Color(0.78f, 0.91f, 0.58f, 0.78f));
+            SetAnchors(grass, Vector2.zero, new Vector2(1f, 0.52f));
+
+            RectTransform waterZone = CreatePanel("WaterZone", battleField, new Color(0.68f, 0.90f, 1f, 0.48f));
+            SetAnchors(waterZone, new Vector2(0.03f, 0.12f), new Vector2(0.38f, 0.58f));
 
             RectTransform fireZone = CreatePanel("FireZone", battleField, new Color(1f, 0.58f, 0.22f, 0.30f));
-            SetAnchors(fireZone, new Vector2(0.55f, 0.18f), new Vector2(0.98f, 0.78f));
+            SetAnchors(fireZone, new Vector2(0.54f, 0.12f), new Vector2(0.96f, 0.58f));
 
-            RectTransform lane = CreatePanel("BattleLane", battleField, new Color(0.96f, 0.86f, 0.55f, 0.75f));
-            SetAnchors(lane, new Vector2(0.12f, 0.38f), new Vector2(0.88f, 0.54f));
+            RectTransform lane = CreatePanel("BattleLane", battleField, new Color(0.96f, 0.86f, 0.55f, 0.50f));
+            SetAnchors(lane, new Vector2(0.22f, 0.30f), new Vector2(0.88f, 0.39f));
 
-            RectTransform laneHighlight = CreatePanel("BattleLaneHighlight", battleField, new Color(1f, 1f, 1f, 0.40f));
-            SetAnchors(laneHighlight, new Vector2(0.14f, 0.48f), new Vector2(0.86f, 0.52f));
+            RectTransform laneHighlight = CreatePanel("BattleLaneHighlight", battleField, new Color(1f, 1f, 1f, 0.55f));
+            SetAnchors(laneHighlight, new Vector2(0.24f, 0.37f), new Vector2(0.84f, 0.40f));
 
-            CreateText("WaterSideLabel", battleField, "WATER SIDE", new Vector2(0.05f, 0.62f), new Vector2(0.32f, 0.75f), TextAnchor.MiddleCenter, 24, new Color(0.05f, 0.36f, 0.68f));
-            CreateText("EnemySideLabel", battleField, "FIRE SIDE", new Vector2(0.68f, 0.62f), new Vector2(0.95f, 0.75f), TextAnchor.MiddleCenter, 24, new Color(0.72f, 0.20f, 0.08f));
+            CreateText("WaterSideLabel", battleField, "출전 중", new Vector2(0.10f, 0.57f), new Vector2(0.27f, 0.69f), TextAnchor.MiddleCenter, 23, new Color(0.05f, 0.36f, 0.30f)).fontStyle = FontStyle.Bold;
+            CreateText("EnemySideLabel", battleField, "불꽃 병사", new Vector2(0.50f, 0.54f), new Vector2(0.72f, 0.66f), TextAnchor.MiddleCenter, 22, new Color(0.72f, 0.20f, 0.08f));
+            CreateText("EnemySideLabel2", battleField, "불꽃 방패병", new Vector2(0.70f, 0.54f), new Vector2(0.92f, 0.66f), TextAnchor.MiddleCenter, 22, new Color(0.72f, 0.20f, 0.08f));
         }
 
         private RectTransform CreatePanel(string name, Transform parent, Color color)
@@ -235,6 +259,21 @@ namespace WaterGrow.Core
             Image image = panel.AddComponent<Image>();
             image.color = color;
             return panel.GetComponent<RectTransform>();
+        }
+
+        private Text CreateHudCard(RectTransform parent, string name, string value, Vector2 anchorMin, Vector2 anchorMax, Color textColor)
+        {
+            RectTransform card = CreatePanel(name, parent, new Color(0.96f, 1f, 0.98f, 0.90f));
+            SetAnchors(card, anchorMin, anchorMax);
+            AddShadow(card.gameObject, new Vector2(0f, -3f), new Color(0.08f, 0.22f, 0.16f, 0.18f));
+
+            Outline outline = card.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.33f, 0.70f, 0.62f, 0.55f);
+            outline.effectDistance = new Vector2(2f, 2f);
+
+            Text text = CreateText("Label", card, value, new Vector2(0.06f, 0.08f), new Vector2(0.94f, 0.92f), TextAnchor.MiddleCenter, 25, textColor);
+            text.fontStyle = FontStyle.Bold;
+            return text;
         }
 
         private Text CreateText(string name, RectTransform parent, string value, Vector2 anchorMin, Vector2 anchorMax, TextAnchor alignment, int fontSize, Color color)

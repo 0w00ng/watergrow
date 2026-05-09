@@ -10,10 +10,10 @@ namespace WaterGrow.Board
         [SerializeField] private Image background;
         [SerializeField] private Text levelText;
         [SerializeField] private GameObject representativeIcon;
-        [SerializeField] private Color emptyColor = new Color(0.13f, 0.38f, 0.52f);
-        [SerializeField] private Color unitColor = new Color(0.10f, 0.66f, 0.98f);
-        [SerializeField] private Color selectedColor = new Color(1f, 0.78f, 0.20f);
-        [SerializeField] private Color mergeableColor = new Color(0.18f, 0.86f, 0.64f);
+        [SerializeField] private Color emptyColor = new Color(0.88f, 0.98f, 1f);
+        [SerializeField] private Color unitColor = new Color(0.82f, 0.96f, 1f);
+        [SerializeField] private Color selectedColor = new Color(0.68f, 0.95f, 0.78f);
+        [SerializeField] private Color mergeableColor = new Color(0.80f, 1f, 0.88f);
 
         private BoardManager owner;
         private Coroutine feedbackRoutine;
@@ -53,7 +53,8 @@ namespace WaterGrow.Board
         {
             if (levelText != null)
             {
-                levelText.text = Unit == null ? CellId : $"Lv.{Unit.Level}";
+                levelText.text = Unit == null ? $"{CellId}\n~~~~" : $"물방울\nLv.{Unit.Level}";
+                levelText.color = Unit == null ? new Color(0.36f, 0.68f, 0.78f) : new Color(0.05f, 0.28f, 0.42f);
             }
 
             if (background != null)

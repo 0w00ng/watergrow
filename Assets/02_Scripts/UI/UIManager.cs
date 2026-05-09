@@ -121,7 +121,7 @@ namespace WaterGrow.UI
         {
             if (stageText != null)
             {
-                stageText.text = string.IsNullOrEmpty(stageId) ? "Stage -" : $"Stage {stageId}";
+                stageText.text = string.IsNullOrEmpty(stageId) ? ">  Stage -" : $">  Stage {stageId}";
             }
         }
 
@@ -129,7 +129,7 @@ namespace WaterGrow.UI
         {
             if (remainingEnemiesText != null)
             {
-                remainingEnemiesText.text = $"Enemies {remainingEnemies}";
+                remainingEnemiesText.text = $"~  Enemies {remainingEnemies}";
             }
         }
 
@@ -145,7 +145,7 @@ namespace WaterGrow.UI
         {
             if (representativeLevelText != null)
             {
-                representativeLevelText.text = level <= 0 ? "Representative: None" : $"Representative: Lv.{level}";
+                representativeLevelText.text = level <= 0 ? "대표 출전: 없음" : $"대표 출전 물정령 Lv.{level}";
             }
 
             if (representativePreview == null)
@@ -166,7 +166,7 @@ namespace WaterGrow.UI
             Text previewLabel = representativePreview.GetComponentInChildren<Text>();
             if (previewLabel != null)
             {
-                previewLabel.text = level <= 0 ? "WATER" : $"Lv.{level}\nWATER";
+                previewLabel.text = level <= 0 ? "물" : $"물정령\nLv.{level}";
             }
         }
 
@@ -211,7 +211,7 @@ namespace WaterGrow.UI
         {
             if (upgradeText != null && upgradeManager != null)
             {
-                upgradeText.text = $"ATK Lv.{upgradeManager.AttackUpgradeLevel}  Cost {upgradeManager.AttackUpgradeCost}";
+                upgradeText.text = $"ATK Lv.{upgradeManager.AttackUpgradeLevel}\n{upgradeManager.AttackUpgradeCost} Gold";
             }
         }
 
@@ -247,8 +247,8 @@ namespace WaterGrow.UI
             bool upgraded = upgradeManager.TryUpgradeAttack();
             RefreshUpgrade();
             ShowGuideMessage(upgraded
-                ? $"Attack upgraded to Lv.{upgradeManager.AttackUpgradeLevel}."
-                : $"Need {upgradeManager.AttackUpgradeCost} Gold to upgrade attack.");
+                ? $"공격력 강화 Lv.{upgradeManager.AttackUpgradeLevel} 완료."
+                : $"공격력 강화에 Gold {upgradeManager.AttackUpgradeCost} 필요.");
         }
 
         private void HandleResetClicked()
