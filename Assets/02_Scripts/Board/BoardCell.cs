@@ -5,7 +5,7 @@ using System.Collections;
 
 namespace WaterGrow.Board
 {
-    public class BoardCell : MonoBehaviour, IPointerClickHandler
+    public class BoardCell : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
     {
         [SerializeField] private Image background;
         [SerializeField] private Text levelText;
@@ -70,6 +70,35 @@ namespace WaterGrow.Board
         public void OnPointerClick(PointerEventData eventData)
         {
             owner?.HandleCellClicked(this);
+        }
+
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            if (IsEmpty)
+            {
+                eventData.pointerDrag = null;
+                return;
+            }
+
+            owner?.HandleDragStarted(this);
+            transform.localScale = Vector3.one * 1.08f;
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            // The prototype keeps units locked to board cells; drag is used as an input gesture only.
+        }
+
+        public void OnEndDrag(PointerEventData eventData)
+        {
+            transform.localScale = Vector3.one;
+            owner?.HandleDragEnded(this);
+        }
+
+        public void OnDrop(PointerEventData eventData)
+        {
+            BoardCell source = eventData.pointerDrag == null ? null : eventData.pointerDrag.GetComponent<BoardCell>();
+            owner?.HandleCellDropped(source, this);
         }
 
         private void PlaySpawnFeedback()

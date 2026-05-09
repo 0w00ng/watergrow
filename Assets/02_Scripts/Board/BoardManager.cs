@@ -29,6 +29,7 @@ namespace WaterGrow.Board
         private int gold;
         private int createdSequence;
         private BoardCell selectedCell;
+        private BoardCell draggingCell;
         private MergeUnit currentRepresentative;
 
         public int Gold => gold;
@@ -47,6 +48,8 @@ namespace WaterGrow.Board
 
             gold = saveData.gold;
             createdSequence = 0;
+            selectedCell = null;
+            draggingCell = null;
 
             foreach (BoardCell cell in cells)
             {
@@ -72,8 +75,7 @@ namespace WaterGrow.Board
         {
             if (!CanSummon)
             {
-                string message = gold < summonCost ? "골드가 부족합니다." : "보드가 가득 찼습니다.";
-                BoardMessage?.Invoke(message);
+                BoardMessage?.Invoke(gold < summonCost ? "Not enough gold." : "Board is full.");
                 return;
             }
 
@@ -85,8 +87,8 @@ namespace WaterGrow.Board
 
             gold -= summonCost;
             target.SetUnit(new MergeUnit(1, ++createdSequence));
-            BoardMessage?.Invoke("Lv.1 물방울 소환");
             selectedCell = target;
+            BoardMessage?.Invoke("Summoned Lv.1 water unit.");
             RefreshBoardState();
             GoldChanged?.Invoke(gold);
         }
@@ -100,27 +102,65 @@ namespace WaterGrow.Board
                 return;
             }
 
-            if (selectedCell == null || selectedCell == clicked)
+            selectedCell = clicked;
+            BoardMessage?.Invoke($"Drag Lv.{clicked.Unit.Level} onto another Lv.{clicked.Unit.Level} to merge.");
+            RefreshBoardState();
+        }
+
+        public void HandleDragStarted(BoardCell source)
+        {
+            if (source == null || source.IsEmpty)
             {
-                selectedCell = clicked;
+                draggingCell = null;
+                selectedCell = null;
                 RefreshBoardState();
                 return;
             }
 
-            if (MergeSystem.CanMerge(selectedCell.Unit, clicked.Unit, maxUnitLevel))
+            draggingCell = source;
+            selectedCell = source;
+            BoardMessage?.Invoke($"Dragging Lv.{source.Unit.Level}. Drop on same level to merge.");
+            RefreshBoardState();
+        }
+
+        public void HandleCellDropped(BoardCell source, BoardCell target)
+        {
+            if (source == null || target == null || source == target)
             {
-                clicked.SetUnit(MergeSystem.CreateMergedUnit(selectedCell.Unit, clicked.Unit, ++createdSequence, maxUnitLevel));
-                selectedCell.SetUnit(null);
-                selectedCell = clicked;
-                BoardMessage?.Invoke($"Lv.{clicked.Unit.Level} 물정령 머지 성공");
-            }
-            else
-            {
-                selectedCell = clicked;
-                BoardMessage?.Invoke("같은 Lv. 물방울을 선택하세요.");
+                ClearDragSelection();
+                return;
             }
 
+            if (source.IsEmpty || target.IsEmpty)
+            {
+                BoardMessage?.Invoke("Drop on a same-level unit to merge.");
+                ClearDragSelection();
+                return;
+            }
+
+            if (!MergeSystem.CanMerge(source.Unit, target.Unit, maxUnitLevel))
+            {
+                BoardMessage?.Invoke(source.Unit.Level >= maxUnitLevel
+                    ? $"Lv.{maxUnitLevel} is the current max level."
+                    : "Only same-level units can merge.");
+                ClearDragSelection();
+                return;
+            }
+
+            target.SetUnit(MergeSystem.CreateMergedUnit(source.Unit, target.Unit, ++createdSequence, maxUnitLevel));
+            source.SetUnit(null);
+            draggingCell = null;
+            selectedCell = target;
+            BoardMessage?.Invoke($"Merged into Lv.{target.Unit.Level} water unit.");
             RefreshBoardState();
+        }
+
+        public void HandleDragEnded(BoardCell source)
+        {
+            if (draggingCell == source)
+            {
+                ClearDragSelection();
+            }
         }
 
         public void AddGold(int amount)
@@ -200,7 +240,7 @@ namespace WaterGrow.Board
             for (int i = 0; i < cells.Count; i++)
             {
                 BoardCell cell = cells[i];
-                bool isSelected = cell == selectedCell;
+                bool isSelected = cell == selectedCell || cell == draggingCell;
                 bool isMergeable = cell.Unit != null && mergeableLevels.Contains(cell.Unit.Level);
                 bool isRepresentative = cell.Unit != null && representative != null && cell.Unit.CreatedOrder == representative.CreatedOrder;
                 cell.RefreshVisual(isSelected, isMergeable, isRepresentative);
@@ -214,6 +254,13 @@ namespace WaterGrow.Board
 
             SummonAvailabilityChanged?.Invoke(CanSummon);
             BoardStateChanged?.Invoke();
+        }
+
+        private void ClearDragSelection()
+        {
+            draggingCell = null;
+            selectedCell = null;
+            RefreshBoardState();
         }
 
         private static bool IsSameRepresentative(MergeUnit a, MergeUnit b)

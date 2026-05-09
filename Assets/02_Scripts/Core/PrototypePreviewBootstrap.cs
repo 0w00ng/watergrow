@@ -61,7 +61,7 @@ namespace WaterGrow.Core
 
             Text representativeText = CreateText("RepresentativeText", battleField, "Representative: None", new Vector2(0.06f, 0.82f), new Vector2(0.94f, 0.96f), TextAnchor.MiddleCenter, 32, new Color(0.05f, 0.30f, 0.52f));
             representativeText.fontStyle = FontStyle.Bold;
-            Text guideText = CreateText("GuideText", battleField, "Summon water drops, merge twins, then watch the front unit fight.", new Vector2(0.06f, 0.04f), new Vector2(0.94f, 0.13f), TextAnchor.MiddleCenter, 22, new Color(0.18f, 0.34f, 0.42f));
+            Text guideText = CreateText("GuideText", battleField, "Summon water drops, then drag one unit onto the same level to merge.", new Vector2(0.06f, 0.04f), new Vector2(0.94f, 0.13f), TextAnchor.MiddleCenter, 22, new Color(0.18f, 0.34f, 0.42f));
 
             Transform targetPoint = CreateMarker("BasePoint", battleField, new Vector2(0.12f, 0.46f), new Color(0.10f, 0.46f, 0.92f), new Vector2(88f, 88f), "BASE");
             Transform spawnPoint = CreateMarker("SpawnPoint", battleField, new Vector2(0.88f, 0.46f), new Color(1f, 0.35f, 0.10f), new Vector2(88f, 88f), "FIRE");
