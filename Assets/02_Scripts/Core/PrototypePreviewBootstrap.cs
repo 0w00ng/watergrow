@@ -41,7 +41,8 @@ namespace WaterGrow.Core
             GameManager gameManager = systemsRoot.AddComponent<GameManager>();
 
             Canvas canvas = CreateCanvas(mainCamera);
-            RectTransform safeArea = CreatePanel("SafeArea", canvas.transform, new Color(0.72f, 0.91f, 1f, 1f));
+            RectTransform phoneFrame = CreatePhoneFrame(canvas.transform);
+            RectTransform safeArea = CreatePanel("SafeArea", phoneFrame, new Color(0.72f, 0.91f, 1f, 1f));
             Stretch(safeArea);
             BuildBackground(safeArea);
 
@@ -161,6 +162,22 @@ namespace WaterGrow.Core
             scaler.referenceResolution = referenceResolution;
             scaler.matchWidthOrHeight = 1f;
             return canvas;
+        }
+
+        private RectTransform CreatePhoneFrame(Transform canvasRoot)
+        {
+            RectTransform backdrop = CreatePanel("CanvasBackdrop", canvasRoot, new Color(0.05f, 0.20f, 0.29f, 1f));
+            Stretch(backdrop);
+
+            RectTransform frame = CreatePanel("PhoneFrame_9x16", backdrop, new Color(0.72f, 0.91f, 1f, 1f));
+            Stretch(frame);
+
+            AspectRatioFitter fitter = frame.gameObject.AddComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            fitter.aspectRatio = referenceResolution.x / referenceResolution.y;
+
+            AddShadow(frame.gameObject, new Vector2(0f, -10f), new Color(0f, 0.08f, 0.12f, 0.45f));
+            return frame;
         }
 
         private void EnsureEventSystem()
