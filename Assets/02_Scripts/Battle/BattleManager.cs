@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using WaterGrow.Board;
 using WaterGrow.Core;
+using WaterGrow.Reward;
 using WaterGrow.Stage;
 using WaterGrow.UI;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace WaterGrow.Battle
             public float spawnInterval = 1.5f;
             public int baseHp = 5;
             public string enemyId = "ENEMY_001";
+            public int clearRewardGold = 30;
+            public int clearRewardCrystal;
         }
 
         [SerializeField] private BoardManager boardManager;
@@ -28,6 +31,8 @@ namespace WaterGrow.Battle
         [SerializeField] private StageManager stageManager;
         [SerializeField] private UIManager uiManager;
         [SerializeField] private DataManager dataManager;
+        [SerializeField] private RewardManager rewardManager;
+        [SerializeField] private UpgradeManager upgradeManager;
         [SerializeField] private Text representativeText;
         [SerializeField] private RectTransform attackEffectRoot;
 
@@ -36,9 +41,9 @@ namespace WaterGrow.Battle
         [SerializeField]
         private List<StageConfig> stageConfigs = new List<StageConfig>
         {
-            new StageConfig { stageId = "STAGE_1_01", enemyCount = 10, spawnInterval = 1.5f, baseHp = 5, enemyId = "ENEMY_001" },
-            new StageConfig { stageId = "STAGE_1_02", enemyCount = 14, spawnInterval = 1.35f, baseHp = 5, enemyId = "ENEMY_001" },
-            new StageConfig { stageId = "STAGE_1_03", enemyCount = 18, spawnInterval = 1.2f, baseHp = 5, enemyId = "ENEMY_001" }
+            new StageConfig { stageId = "STAGE_1_01", enemyCount = 10, spawnInterval = 1.5f, baseHp = 5, enemyId = "ENEMY_001", clearRewardGold = 50, clearRewardCrystal = 0 },
+            new StageConfig { stageId = "STAGE_1_02", enemyCount = 14, spawnInterval = 1.35f, baseHp = 5, enemyId = "ENEMY_001", clearRewardGold = 80, clearRewardCrystal = 1 },
+            new StageConfig { stageId = "STAGE_1_03", enemyCount = 18, spawnInterval = 1.2f, baseHp = 5, enemyId = "ENEMY_001", clearRewardGold = 120, clearRewardCrystal = 2 }
         };
 
         private MergeUnit representative;
@@ -58,6 +63,8 @@ namespace WaterGrow.Battle
             stageManager ??= FindObjectOfType<StageManager>();
             uiManager ??= FindObjectOfType<UIManager>();
             dataManager ??= FindObjectOfType<DataManager>();
+            rewardManager ??= FindObjectOfType<RewardManager>();
+            upgradeManager ??= FindObjectOfType<UpgradeManager>();
 
             if (stageConfigs == null || stageConfigs.Count == 0)
             {
@@ -107,10 +114,10 @@ namespace WaterGrow.Battle
 
             attackTimer = Mathf.Max(0.1f, representativeData.attackInterval);
             uiManager?.ShowAttackPulse();
-            StartCoroutine(PerformAttack(target, representativeData.attackPower));
+            StartCoroutine(PerformAttack(target, GetUpgradedAttackPower(representativeData.attackPower)));
         }
 
-        public void Configure(BoardManager board, EnemySpawner spawner, StageManager stage, UIManager ui, DataManager data, Text representativeLabel, RectTransform effectRoot)
+        public void Configure(BoardManager board, EnemySpawner spawner, StageManager stage, UIManager ui, DataManager data, RewardManager reward, UpgradeManager upgrade, Text representativeLabel, RectTransform effectRoot)
         {
             UnsubscribeEvents();
             boardManager = board;
@@ -118,6 +125,8 @@ namespace WaterGrow.Battle
             stageManager = stage;
             uiManager = ui;
             dataManager = data;
+            rewardManager = reward;
+            upgradeManager = upgrade;
             representativeText = representativeLabel;
             attackEffectRoot = effectRoot;
             SubscribeEvents();
@@ -140,7 +149,7 @@ namespace WaterGrow.Battle
 
         public int GetRepresentativeAttack()
         {
-            return representativeData == null ? 0 : representativeData.attackPower;
+            return representativeData == null ? 0 : GetUpgradedAttackPower(representativeData.attackPower);
         }
 
         private void StartCurrentStage()
@@ -240,16 +249,18 @@ namespace WaterGrow.Battle
         private void HandleStageCleared()
         {
             StopCurrentSpawnRoutine();
+            StageConfig config = CurrentStage;
+            rewardManager?.GrantStageClearReward(config.stageId, config.clearRewardGold, config.clearRewardCrystal);
 
             if (currentStageIndex < stageConfigs.Count - 1)
             {
                 uiManager?.SetRestartButtonLabel("NEXT");
-                uiManager?.ShowGuideMessage("Stage cleared. Tap NEXT to continue.");
+                uiManager?.ShowGuideMessage($"Stage cleared. Reward +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal. Tap NEXT.");
             }
             else
             {
                 uiManager?.SetRestartButtonLabel("RETRY");
-                uiManager?.ShowGuideMessage("Prototype stages cleared. Tap RETRY to replay.");
+                uiManager?.ShowGuideMessage($"Prototype stages cleared. Reward +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal.");
             }
         }
 
@@ -286,6 +297,12 @@ namespace WaterGrow.Battle
                 5 => new WaterUnitData(5, 260, 0.8f, 5.2f),
                 _ => null
             };
+        }
+
+        private int GetUpgradedAttackPower(int baseAttack)
+        {
+            float multiplier = upgradeManager == null ? 1f : upgradeManager.AttackMultiplier;
+            return Mathf.Max(1, Mathf.RoundToInt(baseAttack * multiplier));
         }
 
         private void ClearDeadEnemyReferences()

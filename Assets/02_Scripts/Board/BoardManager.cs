@@ -170,6 +170,21 @@ namespace WaterGrow.Board
             GoldChanged?.Invoke(gold);
         }
 
+        public bool TrySpendGold(int amount)
+        {
+            int cost = Math.Max(0, amount);
+            if (gold < cost)
+            {
+                BoardMessage?.Invoke("Not enough gold.");
+                return false;
+            }
+
+            gold -= cost;
+            RefreshBoardState();
+            GoldChanged?.Invoke(gold);
+            return true;
+        }
+
         public void WriteBoardState(SaveData saveData)
         {
             saveData.gold = gold;

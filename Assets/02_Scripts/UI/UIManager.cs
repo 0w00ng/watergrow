@@ -1,6 +1,7 @@
 using System.Collections;
 using WaterGrow.Board;
 using WaterGrow.Core;
+using WaterGrow.Reward;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,7 @@ namespace WaterGrow.UI
         [SerializeField] private GameManager gameManager;
         [SerializeField] private Button summonButton;
         [SerializeField] private Button saveButton;
+        [SerializeField] private Button upgradeButton;
         [SerializeField] private Button restartButton;
         [SerializeField] private Button resetButton;
         [SerializeField] private Text goldText;
@@ -19,8 +21,10 @@ namespace WaterGrow.UI
         [SerializeField] private Text stageText;
         [SerializeField] private Text remainingEnemiesText;
         [SerializeField] private Text baseHpText;
+        [SerializeField] private Text upgradeText;
         [SerializeField] private Text representativeLevelText;
         [SerializeField] private RectTransform representativePreview;
+        [SerializeField] private UpgradeManager upgradeManager;
 
         private bool boardEventsRegistered;
         private Coroutine attackPulseRoutine;
@@ -36,18 +40,26 @@ namespace WaterGrow.UI
             {
                 gameManager = FindObjectOfType<GameManager>();
             }
+
+            if (upgradeManager == null)
+            {
+                upgradeManager = FindObjectOfType<UpgradeManager>();
+            }
         }
 
         private void OnEnable()
         {
             RegisterBoardEvents();
             RegisterButtonEvents();
+            RegisterUpgradeEvents();
+            RefreshUpgrade();
         }
 
         private void OnDisable()
         {
             UnregisterBoardEvents();
             UnregisterButtonEvents();
+            UnregisterUpgradeEvents();
         }
 
         public void Configure(
@@ -55,6 +67,7 @@ namespace WaterGrow.UI
             GameManager game,
             Button summon,
             Button save,
+            Button upgrade,
             Button restart,
             Button reset,
             Text gold,
@@ -62,8 +75,10 @@ namespace WaterGrow.UI
             Text stage,
             Text remainingEnemies,
             Text baseHp,
+            Text upgradeInfo,
             Text representativeLevel,
-            RectTransform representativePreviewTarget = null)
+            RectTransform representativePreviewTarget = null,
+            UpgradeManager upgradeMgr = null)
         {
             UnregisterBoardEvents();
             UnregisterButtonEvents();
@@ -72,6 +87,7 @@ namespace WaterGrow.UI
             gameManager = game;
             summonButton = summon;
             saveButton = save;
+            upgradeButton = upgrade;
             restartButton = restart;
             resetButton = reset;
             goldText = gold;
@@ -79,11 +95,15 @@ namespace WaterGrow.UI
             stageText = stage;
             remainingEnemiesText = remainingEnemies;
             baseHpText = baseHp;
+            upgradeText = upgradeInfo;
             representativeLevelText = representativeLevel;
             representativePreview = representativePreviewTarget;
+            upgradeManager = upgradeMgr;
 
             RegisterBoardEvents();
             RegisterButtonEvents();
+            RegisterUpgradeEvents();
+            RefreshUpgrade();
         }
 
         public void RefreshAll()
@@ -187,6 +207,14 @@ namespace WaterGrow.UI
             }
         }
 
+        public void RefreshUpgrade()
+        {
+            if (upgradeText != null && upgradeManager != null)
+            {
+                upgradeText.text = $"ATK Lv.{upgradeManager.AttackUpgradeLevel}  Cost {upgradeManager.AttackUpgradeCost}";
+            }
+        }
+
         public void UpdateBoardStateChanged()
         {
             HandleSummonAvailabilityChanged(boardManager != null && boardManager.CanSummon);
@@ -209,6 +237,20 @@ namespace WaterGrow.UI
             battleManager?.StartNextOrRetryStage();
         }
 
+        private void HandleUpgradeClicked()
+        {
+            if (upgradeManager == null)
+            {
+                return;
+            }
+
+            bool upgraded = upgradeManager.TryUpgradeAttack();
+            RefreshUpgrade();
+            ShowGuideMessage(upgraded
+                ? $"Attack upgraded to Lv.{upgradeManager.AttackUpgradeLevel}."
+                : $"Need {upgradeManager.AttackUpgradeCost} Gold to upgrade attack.");
+        }
+
         private void HandleResetClicked()
         {
             SaveManager saveManager = gameManager == null ? FindObjectOfType<SaveManager>() : gameManager.SaveManager;
@@ -219,6 +261,8 @@ namespace WaterGrow.UI
                 boardManager.Initialize(saveManager.Current);
             }
 
+            upgradeManager?.ReloadFromSave();
+            RefreshUpgrade();
             ShowGuideMessage("Save data reset.");
         }
 
@@ -293,6 +337,12 @@ namespace WaterGrow.UI
                 saveButton.onClick.AddListener(HandleSaveClicked);
             }
 
+            if (upgradeButton != null)
+            {
+                upgradeButton.onClick.RemoveListener(HandleUpgradeClicked);
+                upgradeButton.onClick.AddListener(HandleUpgradeClicked);
+            }
+
             if (restartButton != null)
             {
                 restartButton.onClick.RemoveListener(HandleRestartClicked);
@@ -318,6 +368,11 @@ namespace WaterGrow.UI
                 saveButton.onClick.RemoveListener(HandleSaveClicked);
             }
 
+            if (upgradeButton != null)
+            {
+                upgradeButton.onClick.RemoveListener(HandleUpgradeClicked);
+            }
+
             if (restartButton != null)
             {
                 restartButton.onClick.RemoveListener(HandleRestartClicked);
@@ -335,6 +390,23 @@ namespace WaterGrow.UI
             yield return new WaitForSeconds(0.08f);
             representativePreview.localScale = Vector3.one;
             attackPulseRoutine = null;
+        }
+
+        private void RegisterUpgradeEvents()
+        {
+            if (upgradeManager != null)
+            {
+                upgradeManager.UpgradeChanged -= RefreshUpgrade;
+                upgradeManager.UpgradeChanged += RefreshUpgrade;
+            }
+        }
+
+        private void UnregisterUpgradeEvents()
+        {
+            if (upgradeManager != null)
+            {
+                upgradeManager.UpgradeChanged -= RefreshUpgrade;
+            }
         }
 
         private static Color GetRepresentativeColor(int level)

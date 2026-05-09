@@ -1,5 +1,6 @@
 using WaterGrow.Battle;
 using WaterGrow.Board;
+using WaterGrow.Reward;
 using WaterGrow.Stage;
 using WaterGrow.UI;
 using UnityEngine;
@@ -33,6 +34,8 @@ namespace WaterGrow.Core
             BoardManager boardManager = systemsRoot.AddComponent<BoardManager>();
             UIManager uiManager = systemsRoot.AddComponent<UIManager>();
             StageManager stageManager = systemsRoot.AddComponent<StageManager>();
+            RewardManager rewardManager = systemsRoot.AddComponent<RewardManager>();
+            UpgradeManager upgradeManager = systemsRoot.AddComponent<UpgradeManager>();
             EnemySpawner enemySpawner = systemsRoot.AddComponent<EnemySpawner>();
             BattleManager battleManager = systemsRoot.AddComponent<BattleManager>();
             GameManager gameManager = systemsRoot.AddComponent<GameManager>();
@@ -87,15 +90,24 @@ namespace WaterGrow.Core
             BoardCell cellPrefab = CreateBoardCellPrefab(canvas.transform);
             boardManager.ConfigureBoard(boardPanel, cellPrefab);
 
-            Button summonButton = CreateButton("SummonButton", safeArea, "SUMMON", new Vector2(0.04f, 0.04f), new Vector2(0.52f, 0.115f), new Color(0.05f, 0.50f, 0.92f), 38);
-            Button restartButton = CreateButton("RestartButton", safeArea, "RETRY", new Vector2(0.55f, 0.04f), new Vector2(0.74f, 0.115f), new Color(0.16f, 0.62f, 0.48f), 28);
-            Button resetButton = CreateButton("ResetButton", safeArea, "RESET", new Vector2(0.77f, 0.04f), new Vector2(0.96f, 0.115f), new Color(0.74f, 0.24f, 0.28f), 28);
+            Button summonButton = CreateButton("SummonButton", safeArea, "SUMMON", new Vector2(0.04f, 0.04f), new Vector2(0.36f, 0.115f), new Color(0.05f, 0.50f, 0.92f), 34);
+            Button upgradeButton = CreateButton("UpgradeButton", safeArea, "UPGRADE", new Vector2(0.39f, 0.04f), new Vector2(0.61f, 0.115f), new Color(0.78f, 0.48f, 0.08f), 25);
+            Text upgradeLabel = upgradeButton.GetComponentInChildren<Text>();
+            if (upgradeLabel != null)
+            {
+                SetAnchors(upgradeLabel.GetComponent<RectTransform>(), new Vector2(0f, 0.40f), Vector2.one);
+            }
+            Text upgradeText = CreateText("UpgradeText", upgradeButton.GetComponent<RectTransform>(), "ATK Lv.0  Cost 50", new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.42f), TextAnchor.MiddleCenter, 15, new Color(1f, 0.95f, 0.75f));
+            Button restartButton = CreateButton("RestartButton", safeArea, "RETRY", new Vector2(0.64f, 0.04f), new Vector2(0.79f, 0.115f), new Color(0.16f, 0.62f, 0.48f), 24);
+            Button resetButton = CreateButton("ResetButton", safeArea, "RESET", new Vector2(0.82f, 0.04f), new Vector2(0.96f, 0.115f), new Color(0.74f, 0.24f, 0.28f), 23);
             Button saveButton = null;
 
             dataManager.Load();
             saveManager.Load();
-            uiManager.Configure(boardManager, gameManager, summonButton, saveButton, restartButton, resetButton, goldText, guideText, stageText, remainingText, baseHpText, representativeText, waterUnitPreview);
-            battleManager.Configure(boardManager, enemySpawner, stageManager, uiManager, dataManager, representativeText, battleField);
+            rewardManager.Configure(boardManager, saveManager);
+            upgradeManager.Configure(boardManager, saveManager);
+            uiManager.Configure(boardManager, gameManager, summonButton, saveButton, upgradeButton, restartButton, resetButton, goldText, guideText, stageText, remainingText, baseHpText, upgradeText, representativeText, waterUnitPreview, upgradeManager);
+            battleManager.Configure(boardManager, enemySpawner, stageManager, uiManager, dataManager, rewardManager, upgradeManager, representativeText, battleField);
             boardManager.Initialize(saveManager.Current);
             uiManager.RefreshAll();
         }
