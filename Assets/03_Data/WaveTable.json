@@ -1,6 +1,6 @@
 {
   "waves": [
-    { "waveGroupId": "WAVE_1_01", "enemyId": "ENEMY_001", "count": 5, "spawnInterval": 1.2 },
+    { "waveGroupId": "WAVE_1_01", "enemyId": "ENEMY_001", "count": 10, "spawnInterval": 1.5 },
     { "waveGroupId": "WAVE_1_02", "enemyId": "ENEMY_001", "count": 7, "spawnInterval": 1.1 },
     { "waveGroupId": "WAVE_1_03", "enemyId": "ENEMY_003", "count": 6, "spawnInterval": 1.0 },
     { "waveGroupId": "WAVE_1_04", "enemyId": "ENEMY_002", "count": 5, "spawnInterval": 1.2 },
@@ -12,4 +12,3 @@
     { "waveGroupId": "WAVE_1_10", "enemyId": "BOSS_001", "count": 1, "spawnInterval": 1.0 }
   ]
 }
-

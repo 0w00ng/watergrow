@@ -12,6 +12,8 @@ namespace WaterGrow.Board
         public event Action<int> GoldChanged;
         public event Action<MergeUnit> RepresentativeChanged;
         public event Action<bool> SummonAvailabilityChanged;
+        public event Action BoardStateChanged;
+        public event Action<string> BoardMessage;
 
         [Header("Board")]
         [SerializeField] private int columns = 6;
@@ -32,6 +34,12 @@ namespace WaterGrow.Board
         public int Gold => gold;
         public int SummonCost => summonCost;
         public bool CanSummon => gold >= summonCost && cells.Any(cell => cell.IsEmpty);
+
+        public void ConfigureBoard(Transform boardGridRoot, BoardCell boardCellPrefab)
+        {
+            gridRoot = boardGridRoot;
+            cellPrefab = boardCellPrefab;
+        }
 
         public void Initialize(SaveData saveData)
         {
@@ -64,6 +72,8 @@ namespace WaterGrow.Board
         {
             if (!CanSummon)
             {
+                string message = gold < summonCost ? "골드가 부족합니다." : "보드가 가득 찼습니다.";
+                BoardMessage?.Invoke(message);
                 return;
             }
 
@@ -75,6 +85,7 @@ namespace WaterGrow.Board
 
             gold -= summonCost;
             target.SetUnit(new MergeUnit(1, ++createdSequence));
+            BoardMessage?.Invoke("Lv.1 물방울 소환");
             selectedCell = target;
             RefreshBoardState();
             GoldChanged?.Invoke(gold);
@@ -101,10 +112,12 @@ namespace WaterGrow.Board
                 clicked.SetUnit(MergeSystem.CreateMergedUnit(selectedCell.Unit, clicked.Unit, ++createdSequence, maxUnitLevel));
                 selectedCell.SetUnit(null);
                 selectedCell = clicked;
+                BoardMessage?.Invoke($"Lv.{clicked.Unit.Level} 물정령 머지 성공");
             }
             else
             {
                 selectedCell = clicked;
+                BoardMessage?.Invoke("같은 Lv. 물방울을 선택하세요.");
             }
 
             RefreshBoardState();
@@ -166,6 +179,7 @@ namespace WaterGrow.Board
             for (int i = 0; i < columns * rows; i++)
             {
                 BoardCell cell = Instantiate(cellPrefab, gridRoot);
+                cell.gameObject.SetActive(true);
                 cell.Initialize(this, i);
                 cells.Add(cell);
             }
@@ -192,6 +206,7 @@ namespace WaterGrow.Board
             }
 
             SummonAvailabilityChanged?.Invoke(CanSummon);
+            BoardStateChanged?.Invoke();
         }
 
         private static bool IsSameRepresentative(MergeUnit a, MergeUnit b)
@@ -205,4 +220,3 @@ namespace WaterGrow.Board
         }
     }
 }
-
