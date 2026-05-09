@@ -17,6 +17,7 @@ namespace WaterGrow.Stage
 
         public string CurrentStageId => currentStageId;
         public int BaseHp => baseHp;
+        public int MaxBaseHp => maxBaseHp;
         public int RemainingEnemies { get; private set; }
         public bool IsStageRunning { get; private set; }
         public bool IsStageFinished { get; private set; }

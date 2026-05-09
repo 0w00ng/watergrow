@@ -168,7 +168,7 @@ namespace WaterGrow.Battle
             stageManager.StartStage(config.stageId, config.enemyCount, config.baseHp);
             uiManager?.UpdateStage(stageManager.CurrentStageId);
             uiManager?.UpdateRemainingEnemies(stageManager.RemainingEnemies);
-            uiManager?.UpdateBaseHp(stageManager.BaseHp);
+            uiManager?.UpdateBaseHp(stageManager.BaseHp, stageManager.MaxBaseHp);
             uiManager?.SetRestartButtonLabel("RETRY");
             uiManager?.ShowGuideMessage($"{config.stageId} started. Build water units and defend the base.");
 
@@ -242,7 +242,7 @@ namespace WaterGrow.Battle
             if (stageManager != null)
             {
                 uiManager?.UpdateRemainingEnemies(stageManager.RemainingEnemies);
-                uiManager?.UpdateBaseHp(stageManager.BaseHp);
+                uiManager?.UpdateBaseHp(stageManager.BaseHp, stageManager.MaxBaseHp);
             }
         }
 
@@ -268,7 +268,8 @@ namespace WaterGrow.Battle
         {
             StopCurrentSpawnRoutine();
             uiManager?.SetRestartButtonLabel("RETRY");
-            uiManager?.ShowGuideMessage("Stage failed. Merge stronger units and retry.");
+            uiManager?.UpdateBaseHp(0, stageManager == null ? 1 : stageManager.MaxBaseHp);
+            uiManager?.ShowGuideMessage("Base HP 0. Stage failed. Merge stronger units and retry.");
         }
 
         private EnemyController FindFrontEnemy()

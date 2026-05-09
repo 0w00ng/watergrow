@@ -25,9 +25,12 @@ namespace WaterGrow.UI
         [SerializeField] private Text representativeLevelText;
         [SerializeField] private RectTransform representativePreview;
         [SerializeField] private UpgradeManager upgradeManager;
+        [SerializeField] private float minBaseHpScale = 0.68f;
+        [SerializeField] private float maxBaseHpScale = 1f;
 
         private bool boardEventsRegistered;
         private Coroutine attackPulseRoutine;
+        private float currentBaseHpScale = 1f;
 
         private void Awake()
         {
@@ -135,10 +138,24 @@ namespace WaterGrow.UI
 
         public void UpdateBaseHp(int baseHp)
         {
+            UpdateBaseHp(baseHp, baseHp);
+        }
+
+        public void UpdateBaseHp(int baseHp, int maxBaseHp)
+        {
             if (baseHpText != null)
             {
                 baseHpText.text = $"Base HP {baseHp}";
             }
+
+            if (representativePreview == null)
+            {
+                return;
+            }
+
+            float hpRatio = Mathf.Clamp01((float)Mathf.Max(0, baseHp) / Mathf.Max(1, maxBaseHp));
+            currentBaseHpScale = Mathf.Lerp(minBaseHpScale, maxBaseHpScale, hpRatio);
+            representativePreview.localScale = Vector3.one * currentBaseHpScale;
         }
 
         public void UpdateRepresentativeUnit(int level)
@@ -386,9 +403,10 @@ namespace WaterGrow.UI
 
         private IEnumerator AttackPulse()
         {
-            representativePreview.localScale = Vector3.one * 1.16f;
+            Vector3 baseScale = Vector3.one * currentBaseHpScale;
+            representativePreview.localScale = baseScale * 1.16f;
             yield return new WaitForSeconds(0.08f);
-            representativePreview.localScale = Vector3.one;
+            representativePreview.localScale = baseScale;
             attackPulseRoutine = null;
         }
 

@@ -12,6 +12,8 @@ namespace WaterGrow.Battle
         [SerializeField] private Text nameText;
         [SerializeField] private float reachDistance = 0.05f;
         [SerializeField] private float uiMoveSpeedMultiplier = 95f;
+        [SerializeField] private float minHpScale = 0.62f;
+        [SerializeField] private float maxHpScale = 1.08f;
         [SerializeField] private Color normalColor = new Color(1f, 0.35f, 0.08f);
         [SerializeField] private Color hitColor = new Color(1f, 0.92f, 0.25f);
 
@@ -25,6 +27,7 @@ namespace WaterGrow.Battle
         private Coroutine hitFlashRoutine;
         private CanvasGroup canvasGroup;
         private bool usesRectTransform;
+        private Vector3 baseScale = Vector3.one;
 
         public bool IsDead => currentHp <= 0;
         public string EnemyId => data == null ? string.Empty : data.enemyId;
@@ -43,6 +46,7 @@ namespace WaterGrow.Battle
             currentHp = maxHp;
             isResolved = false;
             usesRectTransform = transform is RectTransform;
+            baseScale = transform.localScale;
             canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup == null && usesRectTransform)
             {
@@ -55,6 +59,7 @@ namespace WaterGrow.Battle
             }
 
             RefreshHpBar();
+            ApplyHpScale();
         }
 
         public void ConfigurePreviewVisual(Image body, Slider hp, Text label)
@@ -96,6 +101,7 @@ namespace WaterGrow.Battle
 
             currentHp = Mathf.Max(0, currentHp - Mathf.Max(0, damage));
             RefreshHpBar();
+            ApplyHpScale();
             PlayHitFeedback();
 
             if (IsDead)
@@ -129,13 +135,21 @@ namespace WaterGrow.Battle
             }
         }
 
+        private void ApplyHpScale()
+        {
+            float hpRatio = maxHp <= 0 ? 0f : Mathf.Clamp01((float)currentHp / maxHp);
+            float scale = Mathf.Lerp(minHpScale, maxHpScale, hpRatio);
+            transform.localScale = baseScale * scale;
+        }
+
         private IEnumerator HitFlash()
         {
             bodyImage.color = hitColor;
-            transform.localScale = Vector3.one * 1.12f;
+            Vector3 hpScale = transform.localScale;
+            transform.localScale = hpScale * 1.12f;
             yield return new WaitForSeconds(0.08f);
             bodyImage.color = normalColor;
-            transform.localScale = Vector3.one;
+            ApplyHpScale();
             hitFlashRoutine = null;
         }
 
