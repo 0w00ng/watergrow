@@ -21,12 +21,13 @@ namespace WaterGrow.Core
                 return;
             }
 
-            defaultFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
             BuildPreviewScene();
         }
 
-        private void BuildPreviewScene()
+        public void RebuildPreviewScene()
         {
+            defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
             Camera mainCamera = CreateMainCamera();
             EnsureEventSystem();
 
@@ -45,7 +46,7 @@ namespace WaterGrow.Core
             Stretch(safeArea);
 
             Text stageText = CreateHudText("StageText", safeArea, "Stage STAGE_1_01", new Vector2(0.04f, 0.96f), new Vector2(0.46f, 0.995f), TextAnchor.MiddleLeft);
-            Text remainingText = CreateHudText("RemainingText", safeArea, "남은 적 10", new Vector2(0.52f, 0.96f), new Vector2(0.96f, 0.995f), TextAnchor.MiddleRight);
+            Text remainingText = CreateHudText("RemainingText", safeArea, "Enemies 10", new Vector2(0.52f, 0.96f), new Vector2(0.96f, 0.995f), TextAnchor.MiddleRight);
             Text baseHpText = CreateHudText("BaseHpText", safeArea, "Base HP 5", new Vector2(0.04f, 0.925f), new Vector2(0.46f, 0.955f), TextAnchor.MiddleLeft);
             Text goldText = CreateHudText("GoldText", safeArea, "Gold 100", new Vector2(0.52f, 0.925f), new Vector2(0.96f, 0.955f), TextAnchor.MiddleRight);
 
@@ -53,14 +54,15 @@ namespace WaterGrow.Core
             SetAnchors(battleField, new Vector2(0.04f, 0.46f), new Vector2(0.96f, 0.90f));
             CreateBattleLabels(battleField);
 
-            Text representativeText = CreateHudText("RepresentativeText", battleField, "대표 물정령 없음", new Vector2(0.04f, 0.78f), new Vector2(0.96f, 0.94f), TextAnchor.MiddleCenter);
-            Text guideText = CreateHudText("GuideText", battleField, "소환 버튼으로 Lv.1 물방울을 만드세요.", new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.15f), TextAnchor.MiddleCenter);
+            Text representativeText = CreateHudText("RepresentativeText", battleField, "Representative: None", new Vector2(0.04f, 0.78f), new Vector2(0.96f, 0.94f), TextAnchor.MiddleCenter);
+            Text guideText = CreateHudText("GuideText", battleField, "Tap Summon to create Lv.1 water units. Tap two same-level units to merge.", new Vector2(0.04f, 0.05f), new Vector2(0.96f, 0.15f), TextAnchor.MiddleCenter);
 
             Transform targetPoint = CreateUiMarker("BasePoint", battleField, new Vector2(0.12f, 0.48f), new Color(0.2f, 0.55f, 1f), new Vector2(72f, 72f));
             Transform spawnPoint = CreateUiMarker("SpawnPoint", battleField, new Vector2(0.88f, 0.48f), new Color(1f, 0.35f, 0.08f), new Vector2(72f, 72f));
             RectTransform waterUnitPreview = (RectTransform)CreateUiMarker("WaterUnitPreview", battleField, new Vector2(0.23f, 0.48f), new Color(0.25f, 0.67f, 1f), new Vector2(96f, 96f));
-            Text waterLabel = CreateHudText("WaterUnitLabel", waterUnitPreview, "대표\n물정령", Vector2.zero, Vector2.one, TextAnchor.MiddleCenter);
+            Text waterLabel = CreateHudText("WaterUnitLabel", waterUnitPreview, "Water", Vector2.zero, Vector2.one, TextAnchor.MiddleCenter);
             waterLabel.fontSize = 22;
+
             RectTransform enemyRoot = new GameObject("EnemyRoot", typeof(RectTransform)).GetComponent<RectTransform>();
             enemyRoot.SetParent(battleField, false);
             Stretch(enemyRoot);
@@ -78,17 +80,22 @@ namespace WaterGrow.Core
             BoardCell cellPrefab = CreateBoardCellPrefab(canvas.transform);
             boardManager.ConfigureBoard(boardPanel, cellPrefab);
 
-            Button summonButton = CreateButton("SummonButton", safeArea, "소환", new Vector2(0.04f, 0.04f), new Vector2(0.46f, 0.105f), new Color(0.16f, 0.47f, 0.88f));
-            Button restartButton = CreateButton("RestartButton", safeArea, "재시작", new Vector2(0.49f, 0.04f), new Vector2(0.68f, 0.105f), new Color(0.18f, 0.42f, 0.36f));
-            Button resetButton = CreateButton("ResetButton", safeArea, "초기화", new Vector2(0.71f, 0.04f), new Vector2(0.96f, 0.105f), new Color(0.42f, 0.18f, 0.20f));
+            Button summonButton = CreateButton("SummonButton", safeArea, "Summon", new Vector2(0.04f, 0.04f), new Vector2(0.46f, 0.105f), new Color(0.16f, 0.47f, 0.88f));
+            Button restartButton = CreateButton("RestartButton", safeArea, "Restart", new Vector2(0.49f, 0.04f), new Vector2(0.68f, 0.105f), new Color(0.18f, 0.42f, 0.36f));
+            Button resetButton = CreateButton("ResetButton", safeArea, "Reset", new Vector2(0.71f, 0.04f), new Vector2(0.96f, 0.105f), new Color(0.42f, 0.18f, 0.20f));
             Button saveButton = null;
-            Text representativeLevelText = representativeText;
 
             dataManager.Load();
-            uiManager.Configure(boardManager, gameManager, summonButton, saveButton, restartButton, resetButton, goldText, guideText, stageText, remainingText, baseHpText, representativeLevelText, waterUnitPreview);
+            saveManager.Load();
+            uiManager.Configure(boardManager, gameManager, summonButton, saveButton, restartButton, resetButton, goldText, guideText, stageText, remainingText, baseHpText, representativeText, waterUnitPreview);
             battleManager.Configure(boardManager, enemySpawner, stageManager, uiManager, dataManager, representativeText, battleField);
             boardManager.Initialize(saveManager.Current);
             uiManager.RefreshAll();
+        }
+
+        private void BuildPreviewScene()
+        {
+            RebuildPreviewScene();
         }
 
         private Camera CreateMainCamera()
@@ -198,8 +205,8 @@ namespace WaterGrow.Core
 
         private void CreateBattleLabels(RectTransform battleField)
         {
-            CreateHudText("WaterSideLabel", battleField, "물 정령", new Vector2(0.05f, 0.52f), new Vector2(0.30f, 0.68f), TextAnchor.MiddleCenter).color = new Color(0.45f, 0.78f, 1f);
-            CreateHudText("EnemySideLabel", battleField, "불꽃 병사", new Vector2(0.70f, 0.52f), new Vector2(0.95f, 0.68f), TextAnchor.MiddleCenter).color = new Color(1f, 0.55f, 0.20f);
+            CreateHudText("WaterSideLabel", battleField, "Water Spirit", new Vector2(0.05f, 0.52f), new Vector2(0.30f, 0.68f), TextAnchor.MiddleCenter).color = new Color(0.45f, 0.78f, 1f);
+            CreateHudText("EnemySideLabel", battleField, "Fire Soldier", new Vector2(0.70f, 0.52f), new Vector2(0.95f, 0.68f), TextAnchor.MiddleCenter).color = new Color(1f, 0.55f, 0.20f);
         }
 
         private Transform CreateUiMarker(string name, RectTransform parent, Vector2 anchorPosition, Color color, Vector2 size)

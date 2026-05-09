@@ -19,4 +19,4 @@ MemoryCaptures/
 *.apk
 *.aab
 *.unitypackage
-unity-check*.log
+unity-*.log
