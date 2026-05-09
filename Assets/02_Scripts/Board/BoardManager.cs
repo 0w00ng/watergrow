@@ -22,6 +22,7 @@ namespace WaterGrow.Board
         [SerializeField] private Transform gridRoot;
         [SerializeField] private BoardCell cellPrefab;
         [SerializeField] private List<BoardCell> cells = new List<BoardCell>();
+        [SerializeField] private SaveManager saveManager;
 
         [Header("Economy")]
         [SerializeField] private int summonCost = 10;
@@ -31,6 +32,7 @@ namespace WaterGrow.Board
         private BoardCell selectedCell;
         private BoardCell draggingCell;
         private MergeUnit currentRepresentative;
+        private bool isInitializing;
 
         public int Gold => gold;
         public int SummonCost => summonCost;
@@ -42,8 +44,14 @@ namespace WaterGrow.Board
             cellPrefab = boardCellPrefab;
         }
 
+        public void ConfigureSave(SaveManager save)
+        {
+            saveManager = save;
+        }
+
         public void Initialize(SaveData saveData)
         {
+            isInitializing = true;
             EnsureCells();
 
             gold = saveData.gold;
@@ -69,6 +77,7 @@ namespace WaterGrow.Board
 
             RefreshBoardState();
             GoldChanged?.Invoke(gold);
+            isInitializing = false;
         }
 
         public void Summon()
@@ -91,6 +100,7 @@ namespace WaterGrow.Board
             BoardMessage?.Invoke("Summoned Lv.1 water unit.");
             RefreshBoardState();
             GoldChanged?.Invoke(gold);
+            SaveBoardProgress();
         }
 
         public void HandleCellClicked(BoardCell clicked)
@@ -153,6 +163,7 @@ namespace WaterGrow.Board
             selectedCell = target;
             BoardMessage?.Invoke($"Merged into Lv.{target.Unit.Level} water unit.");
             RefreshBoardState();
+            SaveBoardProgress();
         }
 
         public void HandleDragEnded(BoardCell source)
@@ -182,6 +193,7 @@ namespace WaterGrow.Board
             gold -= cost;
             RefreshBoardState();
             GoldChanged?.Invoke(gold);
+            SaveBoardProgress();
             return true;
         }
 
@@ -269,6 +281,17 @@ namespace WaterGrow.Board
 
             SummonAvailabilityChanged?.Invoke(CanSummon);
             BoardStateChanged?.Invoke();
+        }
+
+        private void SaveBoardProgress()
+        {
+            if (isInitializing || saveManager?.Current == null)
+            {
+                return;
+            }
+
+            WriteBoardState(saveManager.Current);
+            saveManager.Save();
         }
 
         private void ClearDragSelection()

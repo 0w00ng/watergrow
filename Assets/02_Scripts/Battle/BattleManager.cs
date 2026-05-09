@@ -22,6 +22,7 @@ namespace WaterGrow.Battle
             public float spawnInterval = 1.5f;
             public int baseHp = 5;
             public string enemyId = "ENEMY_001";
+            public string waveGroupId = "WAVE_1_01";
             public int clearRewardGold = 30;
             public int clearRewardCrystal;
         }
@@ -29,21 +30,24 @@ namespace WaterGrow.Battle
         [SerializeField] private BoardManager boardManager;
         [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private StageManager stageManager;
+        [SerializeField] private WaveManager waveManager;
         [SerializeField] private UIManager uiManager;
         [SerializeField] private DataManager dataManager;
+        [SerializeField] private SaveManager saveManager;
         [SerializeField] private RewardManager rewardManager;
         [SerializeField] private UpgradeManager upgradeManager;
         [SerializeField] private Text representativeText;
         [SerializeField] private RectTransform attackEffectRoot;
+        [SerializeField] private Projectile projectilePrefab;
 
         [Header("Prototype Stages")]
         [SerializeField] private bool autoStartTestStage = true;
         [SerializeField]
         private List<StageConfig> stageConfigs = new List<StageConfig>
         {
-            new StageConfig { stageId = "STAGE_1_01", enemyCount = 10, spawnInterval = 1.5f, baseHp = 5, enemyId = "ENEMY_001", clearRewardGold = 50, clearRewardCrystal = 0 },
-            new StageConfig { stageId = "STAGE_1_02", enemyCount = 14, spawnInterval = 1.35f, baseHp = 5, enemyId = "ENEMY_001", clearRewardGold = 80, clearRewardCrystal = 1 },
-            new StageConfig { stageId = "STAGE_1_03", enemyCount = 18, spawnInterval = 1.2f, baseHp = 5, enemyId = "ENEMY_001", clearRewardGold = 120, clearRewardCrystal = 2 }
+            new StageConfig { stageId = "STAGE_1_01", enemyCount = 10, spawnInterval = 1.5f, baseHp = 5, enemyId = "ENEMY_001", waveGroupId = "WAVE_1_01", clearRewardGold = 50, clearRewardCrystal = 0 },
+            new StageConfig { stageId = "STAGE_1_02", enemyCount = 14, spawnInterval = 1.35f, baseHp = 5, enemyId = "ENEMY_001", waveGroupId = "WAVE_1_02", clearRewardGold = 80, clearRewardCrystal = 1 },
+            new StageConfig { stageId = "STAGE_1_03", enemyCount = 18, spawnInterval = 1.2f, baseHp = 5, enemyId = "ENEMY_001", waveGroupId = "WAVE_1_03", clearRewardGold = 120, clearRewardCrystal = 2 }
         };
 
         private MergeUnit representative;
@@ -62,8 +66,10 @@ namespace WaterGrow.Battle
             boardManager ??= FindObjectOfType<BoardManager>();
             enemySpawner ??= FindObjectOfType<EnemySpawner>();
             stageManager ??= FindObjectOfType<StageManager>();
+            waveManager ??= FindObjectOfType<WaveManager>();
             uiManager ??= FindObjectOfType<UIManager>();
             dataManager ??= FindObjectOfType<DataManager>();
+            saveManager ??= FindObjectOfType<SaveManager>();
             rewardManager ??= FindObjectOfType<RewardManager>();
             upgradeManager ??= FindObjectOfType<UpgradeManager>();
 
@@ -115,17 +121,19 @@ namespace WaterGrow.Battle
 
             attackTimer = Mathf.Max(0.1f, representativeData.attackInterval);
             uiManager?.ShowAttackPulse();
-            StartCoroutine(PerformAttack(target, GetUpgradedAttackPower(representativeData.attackPower)));
+            FireProjectile(target, GetRepresentativeAttack());
         }
 
-        public void Configure(BoardManager board, EnemySpawner spawner, StageManager stage, UIManager ui, DataManager data, RewardManager reward, UpgradeManager upgrade, Text representativeLabel, RectTransform effectRoot)
+        public void Configure(BoardManager board, EnemySpawner spawner, StageManager stage, WaveManager wave, UIManager ui, DataManager data, SaveManager save, RewardManager reward, UpgradeManager upgrade, Text representativeLabel, RectTransform effectRoot)
         {
             UnsubscribeEvents();
             boardManager = board;
             enemySpawner = spawner;
             stageManager = stage;
+            waveManager = wave;
             uiManager = ui;
             dataManager = data;
+            saveManager = save;
             rewardManager = reward;
             upgradeManager = upgrade;
             representativeText = representativeLabel;
@@ -167,14 +175,24 @@ namespace WaterGrow.Battle
             ClearActiveEnemies();
             attackTimer = 0f;
 
-            stageManager.StartStage(config.stageId, config.enemyCount, config.baseHp);
+            int totalEnemyCount = waveManager == null ? config.enemyCount : waveManager.GetTotalEnemyCount(config.waveGroupId);
+            stageManager.MoveToStage(config.stageId);
+            stageManager.StartStage(config.stageId, totalEnemyCount, config.baseHp);
+            SaveCurrentStage(config.stageId);
             uiManager?.UpdateStage(stageManager.CurrentStageId);
             uiManager?.UpdateRemainingEnemies(stageManager.RemainingEnemies);
             uiManager?.UpdateBaseHp(stageManager.BaseHp, stageManager.MaxBaseHp);
             uiManager?.SetRestartButtonLabel("RETRY");
             uiManager?.ShowGuideMessage($"{config.stageId} started. Build water units and defend the base.");
 
-            spawnRoutine = StartCoroutine(SpawnStageEnemies(config));
+            if (waveManager != null)
+            {
+                waveManager.StartWaveGroup(config.waveGroupId, HandleEnemyKilled, HandleEnemyReachedBase);
+            }
+            else
+            {
+                spawnRoutine = StartCoroutine(SpawnStageEnemies(config));
+            }
         }
 
         private IEnumerator SpawnStageEnemies(StageConfig config)
@@ -289,7 +307,9 @@ namespace WaterGrow.Battle
             if (currentStageIndex < stageConfigs.Count - 1)
             {
                 currentStageIndex++;
+                autoAdvanceRoutine = null;
                 StartCurrentStage();
+                yield break;
             }
 
             autoAdvanceRoutine = null;
@@ -336,6 +356,8 @@ namespace WaterGrow.Battle
 
         private void StopCurrentSpawnRoutine()
         {
+            waveManager?.StopWaveGroup();
+
             if (spawnRoutine != null)
             {
                 StopCoroutine(spawnRoutine);
@@ -406,6 +428,68 @@ namespace WaterGrow.Battle
             }
         }
 
+        private void FireProjectile(EnemyController target, int damage)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            Projectile projectile = CreateProjectile();
+            if (projectile == null)
+            {
+                target.TakeDamage(damage);
+                return;
+            }
+
+            projectile.Launch(target, damage);
+        }
+
+        private Projectile CreateProjectile()
+        {
+            if (projectilePrefab != null)
+            {
+                return Instantiate(projectilePrefab, GetProjectileStartPosition(), Quaternion.identity, attackEffectRoot == null ? transform : attackEffectRoot);
+            }
+
+            if (attackEffectRoot == null)
+            {
+                GameObject projectileObject = new GameObject("WaterProjectile");
+                projectileObject.transform.position = GetProjectileStartPosition();
+                return projectileObject.AddComponent<Projectile>();
+            }
+
+            GameObject effect = new GameObject("WaterProjectile", typeof(RectTransform));
+            effect.transform.SetParent(attackEffectRoot, false);
+            Image image = effect.AddComponent<Image>();
+            image.color = new Color(0.25f, 0.85f, 1f, 0.75f);
+
+            RectTransform rect = effect.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(34f, 34f);
+            rect.anchorMin = new Vector2(0.23f, 0.48f);
+            rect.anchorMax = new Vector2(0.23f, 0.48f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            return effect.AddComponent<Projectile>();
+        }
+
+        private Vector3 GetProjectileStartPosition()
+        {
+            return attackEffectRoot == null ? transform.position : attackEffectRoot.TransformPoint(new Vector3(0.23f, 0.48f, 0f));
+        }
+
+        private void SaveCurrentStage(string stageId)
+        {
+            if (saveManager?.Current == null)
+            {
+                return;
+            }
+
+            boardManager?.WriteBoardState(saveManager.Current);
+            saveManager.Current.currentStageId = stageId;
+            saveManager.Save();
+        }
+
         private void SubscribeEvents()
         {
             if (isSubscribed)
@@ -422,6 +506,11 @@ namespace WaterGrow.Battle
             {
                 stageManager.StageCleared += HandleStageCleared;
                 stageManager.StageFailed += HandleStageFailed;
+            }
+
+            if (waveManager != null)
+            {
+                waveManager.EnemySpawned += HandleEnemySpawned;
             }
 
             isSubscribed = true;
@@ -445,7 +534,20 @@ namespace WaterGrow.Battle
                 stageManager.StageFailed -= HandleStageFailed;
             }
 
+            if (waveManager != null)
+            {
+                waveManager.EnemySpawned -= HandleEnemySpawned;
+            }
+
             isSubscribed = false;
+        }
+
+        private void HandleEnemySpawned(EnemyController enemy)
+        {
+            if (enemy != null)
+            {
+                activeEnemies.Add(enemy);
+            }
         }
     }
 }

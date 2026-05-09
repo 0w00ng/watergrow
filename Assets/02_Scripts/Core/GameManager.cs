@@ -32,6 +32,11 @@ namespace WaterGrow.Core
 
         private void Start()
         {
+            if (boardManager != null)
+            {
+                boardManager.ConfigureSave(saveManager);
+            }
+
             if (saveManager != null && boardManager != null)
             {
                 boardManager.Initialize(saveManager.Current);
@@ -53,6 +58,18 @@ namespace WaterGrow.Core
             boardManager.WriteBoardState(saveManager.Current);
             saveManager.Save();
         }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                SaveGame();
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            SaveGame();
+        }
     }
 }
-

@@ -32,6 +32,7 @@ namespace WaterGrow.Reward
 
             if (saveManager?.Current != null)
             {
+                boardManager?.WriteBoardState(saveManager.Current);
                 saveManager.Current.waterCrystal += Mathf.Max(0, waterCrystal);
                 saveManager.Current.highestClearedStageId = stageId;
                 saveManager.Save();

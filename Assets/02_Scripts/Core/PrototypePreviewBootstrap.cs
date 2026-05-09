@@ -38,6 +38,7 @@ namespace WaterGrow.Core
             BoardManager boardManager = systemsRoot.AddComponent<BoardManager>();
             UIManager uiManager = systemsRoot.AddComponent<UIManager>();
             StageManager stageManager = systemsRoot.AddComponent<StageManager>();
+            WaveManager waveManager = systemsRoot.AddComponent<WaveManager>();
             RewardManager rewardManager = systemsRoot.AddComponent<RewardManager>();
             UpgradeManager upgradeManager = systemsRoot.AddComponent<UpgradeManager>();
             EnemySpawner enemySpawner = systemsRoot.AddComponent<EnemySpawner>();
@@ -116,10 +117,12 @@ namespace WaterGrow.Core
 
             dataManager.Load();
             saveManager.Load();
+            boardManager.ConfigureSave(saveManager);
+            waveManager.Configure(enemySpawner, dataManager);
             rewardManager.Configure(boardManager, saveManager);
             upgradeManager.Configure(boardManager, saveManager);
             uiManager.Configure(boardManager, gameManager, summonButton, saveButton, upgradeButton, restartButton, resetButton, goldText, guideText, stageText, remainingText, baseHpText, upgradeText, representativeText, waterUnitPreview, upgradeManager);
-            battleManager.Configure(boardManager, enemySpawner, stageManager, uiManager, dataManager, rewardManager, upgradeManager, representativeText, battleField);
+            battleManager.Configure(boardManager, enemySpawner, stageManager, waveManager, uiManager, dataManager, saveManager, rewardManager, upgradeManager, representativeText, battleField);
             boardManager.Initialize(saveManager.Current);
             uiManager.RefreshAll();
         }

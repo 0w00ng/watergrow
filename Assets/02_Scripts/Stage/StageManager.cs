@@ -14,10 +14,13 @@ namespace WaterGrow.Stage
         [SerializeField] private string currentStageId = "STAGE_1_01";
         [SerializeField] private int maxBaseHp = 5;
         [SerializeField] private int baseHp = 5;
+        [SerializeField] private int maxReachedEnemies = 5;
 
         public string CurrentStageId => currentStageId;
         public int BaseHp => baseHp;
         public int MaxBaseHp => maxBaseHp;
+        public int ReachedEnemies { get; private set; }
+        public int MaxReachedEnemies => maxReachedEnemies;
         public int RemainingEnemies { get; private set; }
         public bool IsStageRunning { get; private set; }
         public bool IsStageFinished { get; private set; }
@@ -28,6 +31,7 @@ namespace WaterGrow.Stage
             currentStageId = string.IsNullOrEmpty(stageId) ? currentStageId : stageId;
             maxBaseHp = Mathf.Max(1, baseHpValue);
             baseHp = maxBaseHp;
+            ReachedEnemies = 0;
             RemainingEnemies = Mathf.Max(0, totalEnemyCount);
             IsStageRunning = true;
             IsStageFinished = false;
@@ -61,12 +65,26 @@ namespace WaterGrow.Stage
             }
 
             baseHp = Mathf.Max(0, baseHp - Mathf.Max(0, damage));
+            ReachedEnemies++;
             BaseHpChanged?.Invoke(baseHp);
-            ResolveEnemy();
 
-            if (baseHp <= 0)
+            if (baseHp <= 0 || ReachedEnemies >= maxReachedEnemies)
             {
+                RemainingEnemies = Mathf.Max(0, RemainingEnemies - 1);
+                RemainingEnemiesChanged?.Invoke(RemainingEnemies);
                 FailStage();
+                return;
+            }
+
+            ResolveEnemy();
+        }
+
+        public void MoveToStage(string stageId)
+        {
+            if (!string.IsNullOrEmpty(stageId))
+            {
+                currentStageId = stageId;
+                StageChanged?.Invoke(currentStageId);
             }
         }
 
