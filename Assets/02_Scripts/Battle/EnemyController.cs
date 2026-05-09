@@ -12,7 +12,7 @@ namespace WaterGrow.Battle
         [SerializeField] private Text nameText;
         [SerializeField] private float reachDistance = 0.05f;
         [SerializeField] private float uiMoveSpeedMultiplier = 95f;
-        [SerializeField] private float minHpScale = 0.62f;
+        [SerializeField] private float minHpScale = 0.38f;
         [SerializeField] private float maxHpScale = 1.08f;
         [SerializeField] private Color normalColor = new Color(1f, 0.35f, 0.08f);
         [SerializeField] private Color hitColor = new Color(1f, 0.92f, 0.25f);

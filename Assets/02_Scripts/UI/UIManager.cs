@@ -25,7 +25,7 @@ namespace WaterGrow.UI
         [SerializeField] private Text representativeLevelText;
         [SerializeField] private RectTransform representativePreview;
         [SerializeField] private UpgradeManager upgradeManager;
-        [SerializeField] private float minBaseHpScale = 0.68f;
+        [SerializeField] private float minBaseHpScale = 0.42f;
         [SerializeField] private float maxBaseHpScale = 1f;
 
         private bool boardEventsRegistered;

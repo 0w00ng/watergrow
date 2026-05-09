@@ -50,6 +50,7 @@ namespace WaterGrow.Battle
         private WaterUnitData representativeData;
         private readonly List<EnemyController> activeEnemies = new List<EnemyController>();
         private Coroutine spawnRoutine;
+        private Coroutine autoAdvanceRoutine;
         private float attackTimer;
         private bool isSubscribed;
         private int currentStageIndex;
@@ -162,6 +163,7 @@ namespace WaterGrow.Battle
 
             StageConfig config = CurrentStage;
             StopCurrentSpawnRoutine();
+            StopAutoAdvanceRoutine();
             ClearActiveEnemies();
             attackTimer = 0f;
 
@@ -254,8 +256,9 @@ namespace WaterGrow.Battle
 
             if (currentStageIndex < stageConfigs.Count - 1)
             {
-                uiManager?.SetRestartButtonLabel("NEXT");
-                uiManager?.ShowGuideMessage($"Stage cleared. Reward +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal. Tap NEXT.");
+                uiManager?.SetRestartButtonLabel("AUTO");
+                uiManager?.ShowGuideMessage($"Stage cleared. Reward +{config.clearRewardGold} Gold, +{config.clearRewardCrystal} Crystal. Next stage soon.");
+                autoAdvanceRoutine = StartCoroutine(AutoAdvanceToNextStage());
             }
             else
             {
@@ -267,9 +270,29 @@ namespace WaterGrow.Battle
         private void HandleStageFailed()
         {
             StopCurrentSpawnRoutine();
+            StopAutoAdvanceRoutine();
             uiManager?.SetRestartButtonLabel("RETRY");
             uiManager?.UpdateBaseHp(0, stageManager == null ? 1 : stageManager.MaxBaseHp);
             uiManager?.ShowGuideMessage("Base HP 0. Stage failed. Merge stronger units and retry.");
+        }
+
+        private IEnumerator AutoAdvanceToNextStage()
+        {
+            yield return new WaitForSeconds(1.25f);
+
+            if (stageManager == null || !stageManager.IsStageFinished || !stageManager.LastStageCleared)
+            {
+                autoAdvanceRoutine = null;
+                yield break;
+            }
+
+            if (currentStageIndex < stageConfigs.Count - 1)
+            {
+                currentStageIndex++;
+                StartCurrentStage();
+            }
+
+            autoAdvanceRoutine = null;
         }
 
         private EnemyController FindFrontEnemy()
@@ -317,6 +340,15 @@ namespace WaterGrow.Battle
             {
                 StopCoroutine(spawnRoutine);
                 spawnRoutine = null;
+            }
+        }
+
+        private void StopAutoAdvanceRoutine()
+        {
+            if (autoAdvanceRoutine != null)
+            {
+                StopCoroutine(autoAdvanceRoutine);
+                autoAdvanceRoutine = null;
             }
         }
 
