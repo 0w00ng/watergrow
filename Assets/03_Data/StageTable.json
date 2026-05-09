@@ -1,0 +1,15 @@
+{
+  "stages": [
+    { "stageId": "STAGE_1_01", "chapterId": "CHAPTER_1", "stageNumber": 1, "stageNameKo": "물의 숲 입구", "waveGroupId": "WAVE_1_01", "clearRewardGold": 50, "clearRewardCrystal": 0, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_02", "chapterId": "CHAPTER_1", "stageNumber": 2, "stageNameKo": "잔물결 오솔길", "waveGroupId": "WAVE_1_02", "clearRewardGold": 65, "clearRewardCrystal": 0, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_03", "chapterId": "CHAPTER_1", "stageNumber": 3, "stageNameKo": "젖은 숲길", "waveGroupId": "WAVE_1_03", "clearRewardGold": 80, "clearRewardCrystal": 0, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_04", "chapterId": "CHAPTER_1", "stageNumber": 4, "stageNameKo": "작은 샘터", "waveGroupId": "WAVE_1_04", "clearRewardGold": 100, "clearRewardCrystal": 1, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_05", "chapterId": "CHAPTER_1", "stageNumber": 5, "stageNameKo": "흐르는 계곡", "waveGroupId": "WAVE_1_05", "clearRewardGold": 120, "clearRewardCrystal": 1, "unlockContent": "upgradeAttack", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_06", "chapterId": "CHAPTER_1", "stageNumber": 6, "stageNameKo": "뜨거운 벌목지", "waveGroupId": "WAVE_1_06", "clearRewardGold": 145, "clearRewardCrystal": 1, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_07", "chapterId": "CHAPTER_1", "stageNumber": 7, "stageNameKo": "마른 강둑", "waveGroupId": "WAVE_1_07", "clearRewardGold": 170, "clearRewardCrystal": 2, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_08", "chapterId": "CHAPTER_1", "stageNumber": 8, "stageNameKo": "불씨 언덕", "waveGroupId": "WAVE_1_08", "clearRewardGold": 205, "clearRewardCrystal": 2, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_09", "chapterId": "CHAPTER_1", "stageNumber": 9, "stageNameKo": "붉은 숲길", "waveGroupId": "WAVE_1_09", "clearRewardGold": 240, "clearRewardCrystal": 3, "unlockContent": "none", "isBossStage": false, "isMvp": true },
+    { "stageId": "STAGE_1_10", "chapterId": "CHAPTER_1", "stageNumber": 10, "stageNameKo": "물의 숲 수호전", "waveGroupId": "WAVE_1_10", "clearRewardGold": 300, "clearRewardCrystal": 10, "unlockContent": "growthScreen", "isBossStage": true, "isMvp": true }
+  ]
+}
+

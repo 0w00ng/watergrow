@@ -1,0 +1,10 @@
+{
+  "units": [
+    { "unitId": "UNIT_001", "unitNameKo": "작은 물방울", "unitLevel": 1, "roleType": "Basic", "attackType": "Single", "baseAttack": 10, "attackSpeed": 1.0, "range": 4.0, "projectilePrefab": "WaterDropProjectile", "effectPrefab": "SmallSplash", "isMvp": true },
+    { "unitId": "UNIT_002", "unitNameKo": "통통 물방울", "unitLevel": 2, "roleType": "Basic", "attackType": "Single", "baseAttack": 24, "attackSpeed": 1.1, "range": 4.2, "projectilePrefab": "WaterDropProjectile", "effectPrefab": "SmallSplash", "isMvp": true },
+    { "unitId": "UNIT_003", "unitNameKo": "물줄기 정령", "unitLevel": 3, "roleType": "Pierce", "attackType": "Pierce", "baseAttack": 55, "attackSpeed": 1.0, "range": 4.8, "projectilePrefab": "WaterStreamProjectile", "effectPrefab": "LineSplash", "isMvp": true },
+    { "unitId": "UNIT_004", "unitNameKo": "파도 정령", "unitLevel": 4, "roleType": "Area", "attackType": "Area", "baseAttack": 120, "attackSpeed": 0.9, "range": 5.0, "projectilePrefab": "WaveProjectile", "effectPrefab": "WaveSplash", "isMvp": true },
+    { "unitId": "UNIT_005", "unitNameKo": "폭포 수호자", "unitLevel": 5, "roleType": "Control", "attackType": "Knockback", "baseAttack": 260, "attackSpeed": 0.8, "range": 5.2, "projectilePrefab": "WaterfallProjectile", "effectPrefab": "HeavySplash", "isMvp": true }
+  ]
+}
+

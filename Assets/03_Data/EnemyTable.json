@@ -1,0 +1,9 @@
+{
+  "enemies": [
+    { "enemyId": "ENEMY_001", "enemyNameKo": "불꽃 병사", "enemyType": "Basic", "hp": 50, "moveSpeed": 1.0, "attackPower": 1, "rewardGold": 5, "rewardCrystal": 0, "isBoss": false, "isMvp": true },
+    { "enemyId": "ENEMY_002", "enemyNameKo": "불꽃 방패병", "enemyType": "Tank", "hp": 120, "moveSpeed": 0.7, "attackPower": 1, "rewardGold": 9, "rewardCrystal": 0, "isBoss": false, "isMvp": true },
+    { "enemyId": "ENEMY_003", "enemyNameKo": "불꽃 기병", "enemyType": "Fast", "hp": 70, "moveSpeed": 1.5, "attackPower": 1, "rewardGold": 8, "rewardCrystal": 0, "isBoss": false, "isMvp": true },
+    { "enemyId": "BOSS_001", "enemyNameKo": "불꽃 대장", "enemyType": "Boss", "hp": 1200, "moveSpeed": 0.55, "attackPower": 2, "rewardGold": 100, "rewardCrystal": 5, "isBoss": true, "isMvp": true }
+  ]
+}
+
