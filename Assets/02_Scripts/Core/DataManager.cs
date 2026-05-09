@@ -70,10 +70,15 @@ namespace WaterGrow.Core
         {
             if (unitTableJson == null)
             {
+                unitTableJson = Resources.Load<TextAsset>("Data/UnitTable");
+            }
+
+            if (unitTableJson == null)
+            {
                 return;
             }
 
-            UnitTable table = JsonUtility.FromJson<UnitTable>(unitTableJson.text);
+            UnitTable table = UnityEngine.JsonUtility.FromJson<UnitTable>(unitTableJson.text);
             if (table?.units == null)
             {
                 return;
@@ -89,10 +94,15 @@ namespace WaterGrow.Core
         {
             if (enemyTableJson == null)
             {
+                enemyTableJson = Resources.Load<TextAsset>("Data/EnemyTable");
+            }
+
+            if (enemyTableJson == null)
+            {
                 return;
             }
 
-            EnemyTable table = JsonUtility.FromJson<EnemyTable>(enemyTableJson.text);
+            EnemyTable table = UnityEngine.JsonUtility.FromJson<EnemyTable>(enemyTableJson.text);
             if (table?.enemies == null)
             {
                 return;

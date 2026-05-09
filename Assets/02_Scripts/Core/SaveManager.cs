@@ -16,7 +16,7 @@ namespace WaterGrow.Core
         public void Load()
         {
             string json = PlayerPrefs.GetString(SaveKey, string.Empty);
-            Current = string.IsNullOrEmpty(json) ? new SaveData() : JsonUtility.FromJson<SaveData>(json);
+            Current = string.IsNullOrEmpty(json) ? new SaveData() : UnityEngine.JsonUtility.FromJson<SaveData>(json);
 
             if (Current == null)
             {
@@ -26,7 +26,7 @@ namespace WaterGrow.Core
 
         public void Save()
         {
-            string json = JsonUtility.ToJson(Current);
+            string json = UnityEngine.JsonUtility.ToJson(Current);
             PlayerPrefs.SetString(SaveKey, json);
             PlayerPrefs.Save();
         }
@@ -39,4 +39,3 @@ namespace WaterGrow.Core
         }
     }
 }
-

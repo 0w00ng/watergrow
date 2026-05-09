@@ -12,6 +12,8 @@ namespace WaterGrow.UI
         [SerializeField] private GameManager gameManager;
         [SerializeField] private Button summonButton;
         [SerializeField] private Button saveButton;
+        [SerializeField] private Button restartButton;
+        [SerializeField] private Button resetButton;
         [SerializeField] private Text goldText;
         [SerializeField] private Text guideText;
         [SerializeField] private Text stageText;
@@ -48,6 +50,16 @@ namespace WaterGrow.UI
             {
                 saveButton.onClick.AddListener(HandleSaveClicked);
             }
+
+            if (restartButton != null)
+            {
+                restartButton.onClick.AddListener(HandleRestartClicked);
+            }
+
+            if (resetButton != null)
+            {
+                resetButton.onClick.AddListener(HandleResetClicked);
+            }
         }
 
         private void OnDisable()
@@ -62,6 +74,16 @@ namespace WaterGrow.UI
             if (saveButton != null)
             {
                 saveButton.onClick.RemoveListener(HandleSaveClicked);
+            }
+
+            if (restartButton != null)
+            {
+                restartButton.onClick.RemoveListener(HandleRestartClicked);
+            }
+
+            if (resetButton != null)
+            {
+                resetButton.onClick.RemoveListener(HandleResetClicked);
             }
         }
 
@@ -81,6 +103,8 @@ namespace WaterGrow.UI
             GameManager game,
             Button summon,
             Button save,
+            Button restart,
+            Button reset,
             Text gold,
             Text guide,
             Text stage,
@@ -94,6 +118,8 @@ namespace WaterGrow.UI
             gameManager = game;
             summonButton = summon;
             saveButton = save;
+            restartButton = restart;
+            resetButton = reset;
             goldText = gold;
             guideText = guide;
             stageText = stage;
@@ -114,6 +140,18 @@ namespace WaterGrow.UI
             {
                 saveButton.onClick.RemoveListener(HandleSaveClicked);
                 saveButton.onClick.AddListener(HandleSaveClicked);
+            }
+
+            if (restartButton != null)
+            {
+                restartButton.onClick.RemoveListener(HandleRestartClicked);
+                restartButton.onClick.AddListener(HandleRestartClicked);
+            }
+
+            if (resetButton != null)
+            {
+                resetButton.onClick.RemoveListener(HandleResetClicked);
+                resetButton.onClick.AddListener(HandleResetClicked);
             }
         }
 
@@ -210,6 +248,26 @@ namespace WaterGrow.UI
             {
                 guideText.text = "저장 완료";
             }
+        }
+
+        private void HandleRestartClicked()
+        {
+            WaterGrow.Battle.BattleManager battleManager = FindObjectOfType<WaterGrow.Battle.BattleManager>();
+            battleManager?.StartTestStage();
+            ShowGuideMessage("테스트 스테이지 재시작");
+        }
+
+        private void HandleResetClicked()
+        {
+            SaveManager saveManager = gameManager == null ? FindObjectOfType<SaveManager>() : gameManager.SaveManager;
+            saveManager?.ResetSave();
+
+            if (boardManager != null && saveManager != null)
+            {
+                boardManager.Initialize(saveManager.Current);
+            }
+
+            ShowGuideMessage("저장 데이터 초기화");
         }
 
         private void HandleGoldChanged(int gold)

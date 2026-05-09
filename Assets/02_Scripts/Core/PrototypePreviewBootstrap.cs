@@ -78,12 +78,14 @@ namespace WaterGrow.Core
             BoardCell cellPrefab = CreateBoardCellPrefab(canvas.transform);
             boardManager.ConfigureBoard(boardPanel, cellPrefab);
 
-            Button summonButton = CreateButton("SummonButton", safeArea, "소환", new Vector2(0.04f, 0.04f), new Vector2(0.62f, 0.105f), new Color(0.16f, 0.47f, 0.88f));
-            Button saveButton = CreateButton("SaveButton", safeArea, "저장", new Vector2(0.66f, 0.04f), new Vector2(0.96f, 0.105f), new Color(0.18f, 0.25f, 0.31f));
+            Button summonButton = CreateButton("SummonButton", safeArea, "소환", new Vector2(0.04f, 0.04f), new Vector2(0.46f, 0.105f), new Color(0.16f, 0.47f, 0.88f));
+            Button restartButton = CreateButton("RestartButton", safeArea, "재시작", new Vector2(0.49f, 0.04f), new Vector2(0.68f, 0.105f), new Color(0.18f, 0.42f, 0.36f));
+            Button resetButton = CreateButton("ResetButton", safeArea, "초기화", new Vector2(0.71f, 0.04f), new Vector2(0.96f, 0.105f), new Color(0.42f, 0.18f, 0.20f));
+            Button saveButton = null;
             Text representativeLevelText = representativeText;
 
             dataManager.Load();
-            uiManager.Configure(boardManager, gameManager, summonButton, saveButton, goldText, guideText, stageText, remainingText, baseHpText, representativeLevelText, waterUnitPreview);
+            uiManager.Configure(boardManager, gameManager, summonButton, saveButton, restartButton, resetButton, goldText, guideText, stageText, remainingText, baseHpText, representativeLevelText, waterUnitPreview);
             battleManager.Configure(boardManager, enemySpawner, stageManager, uiManager, dataManager, representativeText, battleField);
             boardManager.Initialize(saveManager.Current);
             uiManager.RefreshAll();

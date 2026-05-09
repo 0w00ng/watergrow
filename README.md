@@ -16,6 +16,8 @@
 - 공격 이펙트 도착 후 피해 적용
 - 소환/머지 성공 및 실패 안내 문구
 - 소환/머지 시 보드 셀 pulse 피드백
+- 테스트 스테이지 재시작 버튼
+- 저장 데이터 초기화 버튼
 - Prototype 0.2 테스트 스테이지
   - Stage 1-1
   - 불꽃 병사 10마리
@@ -25,7 +27,7 @@
 - 처치 보상 골드 지급
 - PlayerPrefs 기반 기본 저장 구조
 - UI 연결용 null-safe 메서드
-- `DataManager` 기반 Unit/Enemy TextAsset JSON 로딩 진입점
+- `DataManager` 기반 Unit/Enemy JSON 자동 로딩
 - MVP 데이터 테이블 JSON 초안
 
 ## Unity에서 열기
@@ -47,7 +49,7 @@
   - 불꽃 병사 placeholder: 주황색 UI 오브젝트, 이름 라벨, HP Bar, 피격 반응
   - 공격 이펙트: 파란색 projectile-like UI placeholder
   - 하단 MergeBoardPanel: 6x4 GridLayoutGroup 보드
-  - 하단 버튼: 소환, 저장
+  - 하단 버튼: 소환, 재시작, 초기화
 - `Systems`
    - `DataManager`
    - `GameManager`
@@ -66,7 +68,8 @@ Preview Scene은 최종 디자인이 아니라 기능 확인용입니다. 아트
 2. `EnemySpawner`에 `spawnPoint`, `targetPoint`, `enemyRoot`를 연결합니다.
 3. `UIManager`에 HUD Text와 소환 버튼을 연결합니다.
 4. `BattleManager`에 `BoardManager`, `EnemySpawner`, `StageManager`, `UIManager`를 연결합니다.
-5. Text/Button UI는 선택 연결입니다. 연결하지 않아도 NullReferenceException이 나지 않도록 작성되어 있습니다.
+5. `DataManager`는 `Assets/Resources/Data/UnitTable.json`, `Assets/Resources/Data/EnemyTable.json`을 자동 로딩합니다.
+6. Text/Button UI는 선택 연결입니다. 연결하지 않아도 NullReferenceException이 나지 않도록 작성되어 있습니다.
 
 ## Prototype 0.2 테스트 순서
 
@@ -80,14 +83,16 @@ Preview Scene은 최종 디자인이 아니라 기능 확인용입니다. 아트
 8. 대표 유닛이 있으면 가장 목표 지점에 가까운 적을 자동 공격합니다.
 9. 파란 공격 이펙트가 적에게 도착한 뒤 HP가 감소하는지 확인합니다.
 10. 적 처치 시 골드가 증가하고 남은 적 수가 감소하는지 확인합니다.
-11. 모든 적이 처리되고 baseHp가 남아 있으면 스테이지 클리어 메시지가 표시됩니다.
-12. baseHp가 0이 되면 스테이지 실패 메시지가 표시됩니다.
+11. `재시작` 버튼으로 현재 테스트 스테이지가 적 정리 후 다시 시작되는지 확인합니다.
+12. `초기화` 버튼으로 저장 데이터와 보드 상태가 초기화되는지 확인합니다.
+13. 모든 적이 처리되고 baseHp가 남아 있으면 스테이지 클리어 메시지가 표시됩니다.
+14. baseHp가 0이 되면 스테이지 실패 메시지가 표시됩니다.
 
 ## 현재 한계
 
 - 기능 확인용 Unity Scene과 런타임 Canvas 생성기는 포함되어 있지만, 최종 수동 제작 Scene/Prefab은 아직 없습니다.
 - 적과 투사체 아트는 없습니다. `EnemySpawner`는 prefab이 없으면 HP Bar가 붙은 placeholder GameObject를 생성합니다.
-- 전투 데이터는 `DataManager` TextAsset 연결 시 JSON을 읽을 수 있습니다. Preview Scene은 미연결 상태라 fallback 값을 사용합니다.
+- 전투 데이터는 `Assets/Resources/Data`의 JSON을 자동 로딩합니다. 로딩 실패 시 fallback 값을 사용합니다.
 - 자동 공격은 단일 타겟이며, Preview에서는 UI 공격 이펙트 도착 후 피해가 적용됩니다.
 - 공격 이펙트는 UI placeholder이며 실제 투사체 판정은 아직 아닙니다.
 - Android APK 빌드 설정은 아직 없습니다.

@@ -112,8 +112,7 @@ namespace WaterGrow.Battle
             }
 
             StopCurrentSpawnRoutine();
-            ClearDeadEnemyReferences();
-            activeEnemies.Clear();
+            ClearActiveEnemies();
             attackTimer = 0f;
 
             stageManager.StartTestStage(testStageEnemyCount);
@@ -274,6 +273,19 @@ namespace WaterGrow.Battle
                 StopCoroutine(spawnRoutine);
                 spawnRoutine = null;
             }
+        }
+
+        private void ClearActiveEnemies()
+        {
+            foreach (EnemyController enemy in activeEnemies)
+            {
+                if (enemy != null)
+                {
+                    Destroy(enemy.gameObject);
+                }
+            }
+
+            activeEnemies.Clear();
         }
 
         private IEnumerator PerformAttack(EnemyController target, int damage)

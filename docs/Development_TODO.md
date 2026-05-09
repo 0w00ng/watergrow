@@ -10,8 +10,10 @@
   - 완료 기준: 불꽃 병사가 눈에 보이는 placeholder 이미지와 HP Bar를 가진다.
 - JSON 데이터 로더 구현
   - 완료 기준: UnitTable, EnemyTable, WaveTable 값을 코드 임시값 대신 런타임에서 사용한다.
+  - 현재 상태: UnitTable, EnemyTable은 `Resources/Data` 자동 로딩 완료. WaveTable 로딩은 남음.
 - Unity 컴파일 검증
   - 완료 기준: Console에 compile error가 없다.
+  - 현재 상태: Unity 2022.3.62f3 batchmode 컴파일 통과.
 - Prototype 0.2 플레이 테스트
   - 완료 기준: 소환, 머지, 대표 갱신, 스폰, 자동 공격, 처치, 클리어, 실패가 한 씬에서 확인된다.
 
@@ -40,4 +42,3 @@
   - 완료 기준: Stage 1-10에서 일반 적과 구분되는 보스 1종이 등장한다.
 - Android 빌드 설정
   - 완료 기준: 세로 화면 APK 빌드가 생성된다.
-
