@@ -1,5 +1,5 @@
-using UnityEngine;
 using System;
+using UnityEngine;
 
 namespace WaterGrow.Stage
 {
@@ -20,17 +20,26 @@ namespace WaterGrow.Stage
         public int RemainingEnemies { get; private set; }
         public bool IsStageRunning { get; private set; }
         public bool IsStageFinished { get; private set; }
+        public bool LastStageCleared { get; private set; }
 
-        public void StartTestStage(int totalEnemyCount)
+        public void StartStage(string stageId, int totalEnemyCount, int baseHpValue)
         {
+            currentStageId = string.IsNullOrEmpty(stageId) ? currentStageId : stageId;
+            maxBaseHp = Mathf.Max(1, baseHpValue);
+            baseHp = maxBaseHp;
+            RemainingEnemies = Mathf.Max(0, totalEnemyCount);
             IsStageRunning = true;
             IsStageFinished = false;
-            RemainingEnemies = Mathf.Max(0, totalEnemyCount);
-            baseHp = Mathf.Max(1, maxBaseHp);
+            LastStageCleared = false;
 
             StageChanged?.Invoke(currentStageId);
             RemainingEnemiesChanged?.Invoke(RemainingEnemies);
             BaseHpChanged?.Invoke(baseHp);
+        }
+
+        public void StartTestStage(int totalEnemyCount)
+        {
+            StartStage(currentStageId, totalEnemyCount, maxBaseHp);
         }
 
         public void NotifyEnemyKilled()
@@ -60,15 +69,11 @@ namespace WaterGrow.Stage
             }
         }
 
-        public void MoveNextStage()
-        {
-            Debug.Log("Next stage flow will be implemented in MVP Alpha 0.3.");
-        }
-
         private void CompleteStage()
         {
             IsStageRunning = false;
             IsStageFinished = true;
+            LastStageCleared = true;
             StageCleared?.Invoke();
         }
 
@@ -76,6 +81,7 @@ namespace WaterGrow.Stage
         {
             IsStageRunning = false;
             IsStageFinished = true;
+            LastStageCleared = false;
             StageFailed?.Invoke();
         }
 

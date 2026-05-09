@@ -1,10 +1,11 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using WaterGrow.Board;
 using WaterGrow.Core;
 using WaterGrow.Stage;
 using WaterGrow.UI;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,16 @@ namespace WaterGrow.Battle
 {
     public class BattleManager : MonoBehaviour
     {
+        [Serializable]
+        private class StageConfig
+        {
+            public string stageId = "STAGE_1_01";
+            public int enemyCount = 10;
+            public float spawnInterval = 1.5f;
+            public int baseHp = 5;
+            public string enemyId = "ENEMY_001";
+        }
+
         [SerializeField] private BoardManager boardManager;
         [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private StageManager stageManager;
@@ -20,11 +31,15 @@ namespace WaterGrow.Battle
         [SerializeField] private Text representativeText;
         [SerializeField] private RectTransform attackEffectRoot;
 
-        [Header("Prototype 0.2 Test Stage")]
+        [Header("Prototype Stages")]
         [SerializeField] private bool autoStartTestStage = true;
-        [SerializeField] private int testStageEnemyCount = 10;
-        [SerializeField] private float testStageSpawnInterval = 1.5f;
-        [SerializeField] private string testEnemyId = "ENEMY_001";
+        [SerializeField]
+        private List<StageConfig> stageConfigs = new List<StageConfig>
+        {
+            new StageConfig { stageId = "STAGE_1_01", enemyCount = 10, spawnInterval = 1.5f, baseHp = 5, enemyId = "ENEMY_001" },
+            new StageConfig { stageId = "STAGE_1_02", enemyCount = 14, spawnInterval = 1.35f, baseHp = 5, enemyId = "ENEMY_001" },
+            new StageConfig { stageId = "STAGE_1_03", enemyCount = 18, spawnInterval = 1.2f, baseHp = 5, enemyId = "ENEMY_001" }
+        };
 
         private MergeUnit representative;
         private WaterUnitData representativeData;
@@ -32,32 +47,24 @@ namespace WaterGrow.Battle
         private Coroutine spawnRoutine;
         private float attackTimer;
         private bool isSubscribed;
+        private int currentStageIndex;
+
+        private StageConfig CurrentStage => stageConfigs[Mathf.Clamp(currentStageIndex, 0, stageConfigs.Count - 1)];
 
         private void Awake()
         {
-            if (boardManager == null)
-            {
-                boardManager = FindObjectOfType<BoardManager>();
-            }
+            boardManager ??= FindObjectOfType<BoardManager>();
+            enemySpawner ??= FindObjectOfType<EnemySpawner>();
+            stageManager ??= FindObjectOfType<StageManager>();
+            uiManager ??= FindObjectOfType<UIManager>();
+            dataManager ??= FindObjectOfType<DataManager>();
 
-            if (enemySpawner == null)
+            if (stageConfigs == null || stageConfigs.Count == 0)
             {
-                enemySpawner = FindObjectOfType<EnemySpawner>();
-            }
-
-            if (stageManager == null)
-            {
-                stageManager = FindObjectOfType<StageManager>();
-            }
-
-            if (uiManager == null)
-            {
-                uiManager = FindObjectOfType<UIManager>();
-            }
-
-            if (dataManager == null)
-            {
-                dataManager = FindObjectOfType<DataManager>();
+                stageConfigs = new List<StageConfig>
+                {
+                    new StageConfig()
+                };
             }
         }
 
@@ -75,7 +82,7 @@ namespace WaterGrow.Battle
         {
             if (autoStartTestStage)
             {
-                StartTestStage();
+                StartCurrentStage();
             }
         }
 
@@ -103,26 +110,6 @@ namespace WaterGrow.Battle
             StartCoroutine(PerformAttack(target, representativeData.attackPower));
         }
 
-        public void StartTestStage()
-        {
-            if (stageManager == null)
-            {
-                Debug.LogWarning("StageManager is not assigned.");
-                return;
-            }
-
-            StopCurrentSpawnRoutine();
-            ClearActiveEnemies();
-            attackTimer = 0f;
-
-            stageManager.StartTestStage(testStageEnemyCount);
-            uiManager?.UpdateStage(stageManager.CurrentStageId);
-            uiManager?.UpdateRemainingEnemies(stageManager.RemainingEnemies);
-            uiManager?.UpdateBaseHp(stageManager.BaseHp);
-
-            spawnRoutine = StartCoroutine(SpawnTestStageEnemies());
-        }
-
         public void Configure(BoardManager board, EnemySpawner spawner, StageManager stage, UIManager ui, DataManager data, Text representativeLabel, RectTransform effectRoot)
         {
             UnsubscribeEvents();
@@ -136,41 +123,60 @@ namespace WaterGrow.Battle
             SubscribeEvents();
         }
 
-        private void HandleRepresentativeChanged(MergeUnit unit)
+        public void StartTestStage()
         {
-            representative = unit;
-            representativeData = representative == null ? null : GetWaterUnitData(representative.Level);
-            attackTimer = 0f;
+            StartCurrentStage();
+        }
 
-            if (representativeText != null)
+        public void StartNextOrRetryStage()
+        {
+            if (stageManager != null && stageManager.IsStageFinished && stageManager.LastStageCleared && currentStageIndex < stageConfigs.Count - 1)
             {
-                representativeText.text = representative == null ? "대표 물정령 없음" : $"대표 출전: Lv.{representative.Level}";
+                currentStageIndex++;
             }
 
-            uiManager?.UpdateRepresentativeUnit(representative == null ? 0 : representative.Level);
+            StartCurrentStage();
         }
 
         public int GetRepresentativeAttack()
         {
-            if (representativeData == null)
-            {
-                return 0;
-            }
-
-            return representativeData.attackPower;
+            return representativeData == null ? 0 : representativeData.attackPower;
         }
 
-        private IEnumerator SpawnTestStageEnemies()
+        private void StartCurrentStage()
         {
-            for (int i = 0; i < testStageEnemyCount; i++)
+            if (stageManager == null)
+            {
+                Debug.LogWarning("StageManager is not assigned.");
+                return;
+            }
+
+            StageConfig config = CurrentStage;
+            StopCurrentSpawnRoutine();
+            ClearActiveEnemies();
+            attackTimer = 0f;
+
+            stageManager.StartStage(config.stageId, config.enemyCount, config.baseHp);
+            uiManager?.UpdateStage(stageManager.CurrentStageId);
+            uiManager?.UpdateRemainingEnemies(stageManager.RemainingEnemies);
+            uiManager?.UpdateBaseHp(stageManager.BaseHp);
+            uiManager?.SetRestartButtonLabel("RETRY");
+            uiManager?.ShowGuideMessage($"{config.stageId} started. Build water units and defend the base.");
+
+            spawnRoutine = StartCoroutine(SpawnStageEnemies(config));
+        }
+
+        private IEnumerator SpawnStageEnemies(StageConfig config)
+        {
+            for (int i = 0; i < config.enemyCount; i++)
             {
                 if (stageManager == null || !stageManager.IsStageRunning)
                 {
                     yield break;
                 }
 
-                SpawnEnemy(dataManager == null ? null : dataManager.GetEnemyData(testEnemyId));
-                yield return new WaitForSeconds(Mathf.Max(0.1f, testStageSpawnInterval));
+                SpawnEnemy(dataManager == null ? null : dataManager.GetEnemyData(config.enemyId));
+                yield return new WaitForSeconds(Mathf.Max(0.1f, config.spawnInterval));
             }
 
             spawnRoutine = null;
@@ -184,16 +190,27 @@ namespace WaterGrow.Battle
                 return;
             }
 
-            if (enemyData == null)
-            {
-                enemyData = new EnemyData("ENEMY_001", "불꽃 병사", 30, 1.0f, 5, 1);
-            }
+            enemyData ??= new EnemyData("ENEMY_001", "Fire Soldier", 30, 1.0f, 5, 1);
 
             EnemyController enemy = enemySpawner.SpawnEnemy(enemyData, HandleEnemyKilled, HandleEnemyReachedBase);
             if (enemy != null)
             {
                 activeEnemies.Add(enemy);
             }
+        }
+
+        private void HandleRepresentativeChanged(MergeUnit unit)
+        {
+            representative = unit;
+            representativeData = representative == null ? null : GetWaterUnitData(representative.Level);
+            attackTimer = 0f;
+
+            if (representativeText != null)
+            {
+                representativeText.text = representative == null ? "Representative: None" : $"Representative: Lv.{representative.Level}";
+            }
+
+            uiManager?.UpdateRepresentativeUnit(representative == null ? 0 : representative.Level);
         }
 
         private void HandleEnemyKilled(EnemyController enemy)
@@ -223,13 +240,24 @@ namespace WaterGrow.Battle
         private void HandleStageCleared()
         {
             StopCurrentSpawnRoutine();
-            uiManager?.ShowGuideMessage("스테이지 클리어");
+
+            if (currentStageIndex < stageConfigs.Count - 1)
+            {
+                uiManager?.SetRestartButtonLabel("NEXT");
+                uiManager?.ShowGuideMessage("Stage cleared. Tap NEXT to continue.");
+            }
+            else
+            {
+                uiManager?.SetRestartButtonLabel("RETRY");
+                uiManager?.ShowGuideMessage("Prototype stages cleared. Tap RETRY to replay.");
+            }
         }
 
         private void HandleStageFailed()
         {
             StopCurrentSpawnRoutine();
-            uiManager?.ShowGuideMessage("스테이지 실패");
+            uiManager?.SetRestartButtonLabel("RETRY");
+            uiManager?.ShowGuideMessage("Stage failed. Merge stronger units and retry.");
         }
 
         private EnemyController FindFrontEnemy()
@@ -249,7 +277,6 @@ namespace WaterGrow.Battle
                 return data;
             }
 
-            // DataManager가 없는 수동 Scene에서도 공격 루프가 죽지 않도록 유지하는 MVP 테스트용 fallback.
             return level switch
             {
                 1 => new WaterUnitData(1, 10, 1.0f, 4.0f),

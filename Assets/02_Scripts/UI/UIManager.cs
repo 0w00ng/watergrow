@@ -173,6 +173,20 @@ namespace WaterGrow.UI
             attackPulseRoutine = StartCoroutine(AttackPulse());
         }
 
+        public void SetRestartButtonLabel(string label)
+        {
+            if (restartButton == null)
+            {
+                return;
+            }
+
+            Text buttonText = restartButton.GetComponentInChildren<Text>();
+            if (buttonText != null)
+            {
+                buttonText.text = label;
+            }
+        }
+
         public void UpdateBoardStateChanged()
         {
             HandleSummonAvailabilityChanged(boardManager != null && boardManager.CanSummon);
@@ -192,8 +206,7 @@ namespace WaterGrow.UI
         private void HandleRestartClicked()
         {
             Battle.BattleManager battleManager = FindObjectOfType<Battle.BattleManager>();
-            battleManager?.StartTestStage();
-            ShowGuideMessage("Stage restarted.");
+            battleManager?.StartNextOrRetryStage();
         }
 
         private void HandleResetClicked()
