@@ -16,6 +16,11 @@ namespace WaterGrow.Core
 
         private void Awake()
         {
+            if (FindObjectOfType<BoardManager>() != null && GameObject.Find("SkyWash") != null)
+            {
+                return;
+            }
+
             RebuildPreviewScene();
         }
 
@@ -314,6 +319,11 @@ namespace WaterGrow.Core
             GameObject[] objects = FindObjectsOfType<GameObject>();
             foreach (GameObject target in objects)
             {
+                if (target == null)
+                {
+                    continue;
+                }
+
                 if (target.name != objectName)
                 {
                     continue;
