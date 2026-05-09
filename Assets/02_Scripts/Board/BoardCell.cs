@@ -10,10 +10,10 @@ namespace WaterGrow.Board
         [SerializeField] private Image background;
         [SerializeField] private Text levelText;
         [SerializeField] private GameObject representativeIcon;
-        [SerializeField] private Color emptyColor = new Color(0.16f, 0.22f, 0.28f);
-        [SerializeField] private Color unitColor = new Color(0.22f, 0.58f, 0.92f);
-        [SerializeField] private Color selectedColor = new Color(0.96f, 0.78f, 0.26f);
-        [SerializeField] private Color mergeableColor = new Color(0.27f, 0.76f, 0.53f);
+        [SerializeField] private Color emptyColor = new Color(0.13f, 0.38f, 0.52f);
+        [SerializeField] private Color unitColor = new Color(0.10f, 0.66f, 0.98f);
+        [SerializeField] private Color selectedColor = new Color(1f, 0.78f, 0.20f);
+        [SerializeField] private Color mergeableColor = new Color(0.18f, 0.86f, 0.64f);
 
         private BoardManager owner;
         private Coroutine feedbackRoutine;

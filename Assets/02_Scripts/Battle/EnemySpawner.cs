@@ -39,9 +39,13 @@ namespace WaterGrow.Battle
                 if (useUiPlaceholder)
                 {
                     RectTransform rect = placeholder.GetComponent<RectTransform>();
-                    rect.sizeDelta = new Vector2(74f, 74f);
+                    rect.sizeDelta = new Vector2(86f, 86f);
+                    CreateEnemyGlow(rect);
                     Image image = placeholder.AddComponent<Image>();
                     image.color = placeholderColor;
+                    Outline outline = placeholder.AddComponent<Outline>();
+                    outline.effectColor = new Color(1f, 0.92f, 0.45f, 0.55f);
+                    outline.effectDistance = new Vector2(3f, 3f);
 
                     Text label = CreateEnemyLabel(rect, enemyData == null ? "Enemy" : enemyData.enemyNameKo);
                     Slider hpBar = CreateHpBar(rect);
@@ -131,7 +135,7 @@ namespace WaterGrow.Battle
             labelRect.offsetMax = Vector2.zero;
 
             Text label = labelObject.AddComponent<Text>();
-            label.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             label.text = labelText;
             label.alignment = TextAnchor.MiddleCenter;
             label.color = new Color(1f, 0.86f, 0.62f, 1f);
@@ -148,6 +152,20 @@ namespace WaterGrow.Battle
             rect.anchorMax = Vector2.one;
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
+        }
+
+        private static void CreateEnemyGlow(RectTransform parent)
+        {
+            GameObject glowObject = new GameObject("FlameGlow", typeof(RectTransform));
+            glowObject.transform.SetParent(parent, false);
+            RectTransform glowRect = glowObject.GetComponent<RectTransform>();
+            glowRect.anchorMin = new Vector2(-0.20f, -0.20f);
+            glowRect.anchorMax = new Vector2(1.20f, 1.20f);
+            glowRect.offsetMin = Vector2.zero;
+            glowRect.offsetMax = Vector2.zero;
+
+            Image glow = glowObject.AddComponent<Image>();
+            glow.color = new Color(1f, 0.70f, 0.12f, 0.24f);
         }
     }
 }
